@@ -1,44 +1,41 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PaddleMovement : MonoBehaviour
 {
-    public float Speed = 5f;
+    [SerializeField] private float _speed = 5.0f;
 
-    public float LimitY = 3.75f;
+    private float _direction = 0.0f;
 
-    public KeyCode upDirection;
-    public KeyCode downDirection;
+    [SerializeField] private KeyCode _upDirection;
+    [SerializeField] private KeyCode _downDirection;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private Rigidbody2D _rb;
+
     void Start()
     {
-        
+        // get reference to the Rigidbody
+        _rb = GetComponent<Rigidbody2D>();
+
+        // initialize attributes in case they weren't set in the inspector
+        _rb.linearDamping = 0.0f;
+        _rb.angularDamping = 0.0f;
+        _rb.gravityScale = 0.0f;
+    }
+
+    void FixedUpdate()
+    {
+        // apply movement using the Linear Velocity attribute of the Rigidbody
+        _rb.linearVelocityY = _direction * _speed;
     }
 
     // Update is called once per frame
     void Update()
     {
-        float movement = 0f;
+        // define direction based on player input
+        _direction = 0.0f;
 
-        // Check if given keycode is currently pressed
-        if (Input.GetKey(upDirection))
-        {
-            // Update position by adding two vectors
-            movement += Speed;
-        }
-
-        if (Input.GetKey(downDirection))
-        {
-            // Update position by adding two vectors
-            movement -= Speed;
-        }
-
-        Vector3 newPosition = transform.position + new Vector3(0f, movement, 0f) * Time.deltaTime;
-
-        newPosition.y = Mathf.Clamp(newPosition.y, -LimitY, LimitY);
-
-        transform.position = newPosition;
-
-        // transform.Translate(movementVector);
+        if (Input.GetKey(_upDirection)) _direction += 1f;
+        if (Input.GetKey(_downDirection)) _direction -= 1f;
     }
 }
