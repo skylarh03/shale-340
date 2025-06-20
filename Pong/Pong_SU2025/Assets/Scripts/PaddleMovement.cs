@@ -3,8 +3,6 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PaddleMovement : MonoBehaviour
 {
-    [SerializeField] private float _speed = 5.0f;
-
     private float _direction = 0.0f;
 
     [SerializeField] private KeyCode _upDirection;
@@ -26,7 +24,7 @@ public class PaddleMovement : MonoBehaviour
     void FixedUpdate()
     {
         // apply movement using the Linear Velocity attribute of the Rigidbody
-        _rb.linearVelocityY = _direction * _speed;
+        _rb.linearVelocityY = _direction * GameBehavior.Instance.PaddleSpeed;
     }
 
     // Update is called once per frame
