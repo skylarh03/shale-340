@@ -63,19 +63,45 @@ public class PlayerBehavior : MonoBehaviour
         // jump logic
         // jump has an initial force, slows down to reach a peak, then falls due to gravity
         // can only happen while grounded
+        // if you jump, disable platform collision so you can jump through
+        // however, this has to be re-enabled upon falling
         if (Input.GetKeyDown(jumpButton) && isGrounded)
         {
             _rb.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
+            _rb.excludeLayers = LayerMask.GetMask("Floor", "Wall");
             isGrounded = false;
+        }
+
+        // if falling, only ignore wall
+        // if climbing downward, ignore floor as well
+        if (_rb.linearVelocityY < 0.0f)
+        {
+            if (isClimbing)
+            {
+                _rb.excludeLayers = LayerMask.GetMask("Floor", "Wall");
+
+            }
+            else
+            {
+                _rb.excludeLayers = LayerMask.GetMask("Wall");
+            }
         }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        // in order to be grounded, you must be approaching from above
         if (collision.gameObject.CompareTag("Floor"))
         {
-            isGrounded = true;
+            // only grounds if you're approaching from above
+            // otherwise, you ignore the collision
+            if (_rb.position.y > collision.gameObject.transform.position.y)
+            {
+                isGrounded = true;
+            }
         }
+
+        _rb.excludeLayers = new LayerMask(); // upon landing, reset layer overrides
     }
     
     void OnCollisionStay2D(Collision2D collision)
@@ -98,7 +124,7 @@ public class PlayerBehavior : MonoBehaviour
         {
             // check for vertical input when colliding with ladder trigger
             // only allow down input if player is at top of ladder
-            if ((Input.GetKey(upDirection) && _rb.position.y < other.transform.position.y)|| Input.GetKey(downDirection))
+            if ((_verticalDirection != 0.0f && _rb.position.y < other.transform.position.y)|| Input.GetKey(downDirection))
             {
                 isClimbing = true;
                 isGrounded = false;
