@@ -71,40 +71,9 @@ public class PlayerBehavior : MonoBehaviour
             _rb.excludeLayers = LayerMask.GetMask("Floor", "Wall");
             isGrounded = false;
         }
-
-        // if falling, only ignore wall
-        // if climbing downward, ignore floor as well
-        if (_rb.linearVelocityY < 0.0f)
-        {
-            if (isClimbing)
-            {
-                _rb.excludeLayers = LayerMask.GetMask("Floor", "Wall");
-
-            }
-            else
-            {
-                _rb.excludeLayers = LayerMask.GetMask("Wall");
-            }
-        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
-    {
-        // in order to be grounded, you must be approaching from above
-        if (collision.gameObject.CompareTag("Floor"))
-        {
-            // only grounds if you're approaching from above
-            // otherwise, you ignore the collision
-            if (_rb.position.y > collision.gameObject.transform.position.y)
-            {
-                isGrounded = true;
-            }
-        }
-
-        _rb.excludeLayers = new LayerMask(); // upon landing, reset layer overrides
-    }
-    
-    void OnCollisionStay2D(Collision2D collision)
     {
         // allow sprite to climb up any short jumps in environment
         // only do this if the player is colliding with a wall, is grounded, and is moving
@@ -113,6 +82,33 @@ public class PlayerBehavior : MonoBehaviour
             _rb.MovePosition(new Vector2(_rb.position.x + (ledgeUpForce.x * _direction), _rb.position.y + ledgeUpForce.y));
             //Debug.Log(collision.gameObject.tag);
             //Debug.Log(_direction);
+        } 
+    }
+    
+    void OnCollisionStay2D(Collision2D collision)
+    {
+        
+    }
+
+    private void OnCollisionExit2D(Collision2D other)
+    {
+        // only ungrounds if the player walks off a ledge
+        if (other.gameObject.CompareTag("Floor") && _rb.linearVelocityY < 0.0f)
+        {
+            isGrounded = false;
+        }
+    }
+
+    // to compensate for falling at any distance, there are triggers above all the ground tiles
+    // these triggers will re-enable all collision
+    // in order to allow for jumping through platforms, this must only happen if the player's vertical
+    // velocity is negative (the player needs to be definitely falling)
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Enable Floor Collision") && _rb.linearVelocityY < 0.0f)
+        {
+            isGrounded = true;
+            _rb.excludeLayers = new LayerMask();
         }
     }
 
