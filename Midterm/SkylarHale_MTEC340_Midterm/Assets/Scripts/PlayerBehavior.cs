@@ -17,7 +17,8 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private float jumpForce;
     [SerializeField] private float gravity = 1.0f;
     [SerializeField] private bool isGrounded = false;
-    [SerializeField] private bool isClimbing = false;
+    [SerializeField] private bool hasJumped = false;
+    [SerializeField] private bool canClimb = false;
     
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -40,9 +41,10 @@ public class PlayerBehavior : MonoBehaviour
         // apply movement using the Linear Velocity attribute of the Rigidbody
         _rb.linearVelocityX = _direction * horizontalSpeed;
 
-        if (isClimbing)
+        if (!hasJumped && canClimb)
         {
             _rb.linearVelocityY = _verticalDirection * climbSpeed;
+            //Debug.Log(_verticalDirection);
         }
     }
 
@@ -55,7 +57,7 @@ public class PlayerBehavior : MonoBehaviour
 
         if (Input.GetKey(rightDirection)) _direction += 1f;
         if (Input.GetKey(leftDirection)) _direction -= 1f;
-        
+
         if (Input.GetKey(upDirection)) _verticalDirection += 1f;
         if (Input.GetKey(downDirection)) _verticalDirection -= 1f;
         
@@ -66,6 +68,8 @@ public class PlayerBehavior : MonoBehaviour
         // however, this has to be re-enabled upon falling
         if (Input.GetKeyDown(jumpButton) && isGrounded)
         {
+            hasJumped = true;
+            
             // fun little bug happened:
             // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional
             // vertical velocity, thereby meaning you jumped higher.
@@ -91,9 +95,11 @@ public class PlayerBehavior : MonoBehaviour
     
     void OnCollisionStay2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == "Floor")
+        if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = true;
+            hasJumped = false;
+            _rb.gravityScale = gravity;
         }
     }
 
@@ -111,36 +117,28 @@ public class PlayerBehavior : MonoBehaviour
     // in order to allow for jumping through platforms, this must only happen if the player is falling
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Enable Floor Collision") && _rb.linearVelocityY < -1.0f) // -1.0f so the player doesn't snap through collision at the apex of their jump
+        if (other.gameObject.CompareTag("Enable Floor Collision"))
         {
-            isGrounded = true;
-            _rb.excludeLayers = new LayerMask();
-            //Debug.Log(_rb.linearVelocityY);
+            if (_rb.linearVelocityY < -1.0f || canClimb) // -1.0f so the player doesn't snap through collision at the apex of their jump
+            {
+                isGrounded = true;
+                _rb.excludeLayers = new LayerMask();
+                //Debug.Log(_rb.linearVelocityY);
+            }
+        }
+
+        else if (other.gameObject.CompareTag("Ladder"))
+        {
+            canClimb = true;
         }
     }
 
-    // snap to ladder if player is in trigger and hits up key
-    // override normal floor collision so you can climb through
-    
-    // also noteworthy, ladders have extra collision to cap how high you can climb, so you don't repeatedly jump
-    // off of the top. so if you are NOT on a ladder, then you ignore this collision.
-    // (this ignoring logic is done on lines 114 and 152)
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Ladder") && !isClimbing)
+        if (_verticalDirection != 0.0f && other.gameObject.CompareTag("Ladder"))
         {
-            // check for vertical input when colliding with ladder trigger
-            // only allow down input if player is at top of ladder
-            if ((_verticalDirection != 0.0f && _rb.position.y < other.transform.position.y)|| Input.GetKey(downDirection))
-            {
-                isClimbing = true;
-                isGrounded = false;
-                _rb.gravityScale = 0;
-                _rb.excludeLayers = LayerMask.GetMask("Floor");
-            }
-            
-            // enable height cap collision
-            
+            _rb.gravityScale = 0.0f;
+            _rb.excludeLayers = LayerMask.GetMask("Floor");
         }
     }
 
@@ -148,18 +146,15 @@ public class PlayerBehavior : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Ladder"))
         {
-            isClimbing = false;
-            _rb.gravityScale = gravity;
-            _rb.excludeLayers = new LayerMask();
-            
-            // override upward force upon exiting ladder, but only if hitting vertical inputs.
-            // because of needing to climb down, the trigger must overlap with walkable area
-            // on the upper floor. so, we need to IGNORE this if the player happens to jump
-            // in this trigger area
-            if (Input.GetKey(upDirection))
+            canClimb = false;
+
+            if (_rb.position.y > other.transform.position.y)
             {
-                _rb.linearVelocityY = 0.0f;
+                _rb.linearVelocity = Vector2.zero;
             }
+            
+            _rb.gravityScale = gravity;
+            _rb.excludeLayers = new LayerMask(); // resets collision overrides to nothing
         }
     }
 }
