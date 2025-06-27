@@ -18,7 +18,6 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private float gravity = 1.0f;
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool hasJumped = false;
-    [SerializeField] private bool canClimb = false;
     
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -41,11 +40,11 @@ public class PlayerBehavior : MonoBehaviour
         // apply movement using the Linear Velocity attribute of the Rigidbody
         _rb.linearVelocityX = _direction * horizontalSpeed;
 
-        if (!hasJumped && canClimb)
-        {
-            _rb.linearVelocityY = _verticalDirection * climbSpeed;
-            //Debug.Log(_verticalDirection);
-        }
+        // if (!hasJumped)
+        // {
+        //     _rb.linearVelocityY = _verticalDirection * climbSpeed;
+        //     //Debug.Log(_verticalDirection);
+        // }
     }
 
     // Update is called once per frame
@@ -119,42 +118,12 @@ public class PlayerBehavior : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Enable Floor Collision"))
         {
-            if (_rb.linearVelocityY < -1.0f || canClimb) // -1.0f so the player doesn't snap through collision at the apex of their jump
+            if (_rb.linearVelocityY < -1.0f) // -1.0f so the player doesn't snap through collision at the apex of their jump
             {
                 isGrounded = true;
                 _rb.excludeLayers = new LayerMask();
                 //Debug.Log(_rb.linearVelocityY);
             }
-        }
-
-        else if (other.gameObject.CompareTag("Ladder"))
-        {
-            canClimb = true;
-        }
-    }
-
-    private void OnTriggerStay2D(Collider2D other)
-    {
-        if (_verticalDirection != 0.0f && other.gameObject.CompareTag("Ladder"))
-        {
-            _rb.gravityScale = 0.0f;
-            _rb.excludeLayers = LayerMask.GetMask("Floor");
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.gameObject.CompareTag("Ladder"))
-        {
-            canClimb = false;
-
-            if (_rb.position.y > other.transform.position.y)
-            {
-                _rb.linearVelocity = Vector2.zero;
-            }
-            
-            _rb.gravityScale = gravity;
-            _rb.excludeLayers = new LayerMask(); // resets collision overrides to nothing
         }
     }
 }
