@@ -22,7 +22,7 @@ public class BarrelSpawner : MonoBehaviour
     IEnumerator SpawnBarrel(float minWait, float maxWait)
     {
         isWaiting = true;
-        Instantiate(barrelPrefab);
+        Instantiate(barrelPrefab).SetActive(true);
         
         yield return new WaitForSeconds(Random.Range(minWait, maxWait));
         isWaiting = false;
