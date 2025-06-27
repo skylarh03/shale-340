@@ -16,8 +16,9 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private float climbSpeed = 5.0f;
     [SerializeField] private float jumpForce;
     [SerializeField] private float gravity = 1.0f;
+    
     [SerializeField] private bool isGrounded = false;
-    [SerializeField] private bool hasJumped = false;
+    [SerializeField] private bool isClimbing = false;
     
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -38,13 +39,10 @@ public class PlayerBehavior : MonoBehaviour
     void FixedUpdate()
     {
         // apply movement using the Linear Velocity attribute of the Rigidbody
+        // only allow horizontal input if player isn't climbing
+        // if they are, then allow both axes
         _rb.linearVelocityX = _direction * horizontalSpeed;
-
-        // if (!hasJumped)
-        // {
-        //     _rb.linearVelocityY = _verticalDirection * climbSpeed;
-        //     //Debug.Log(_verticalDirection);
-        // }
+        if (isClimbing) _rb.linearVelocityY = _verticalDirection * climbSpeed;
     }
 
     // Update is called once per frame
@@ -62,13 +60,11 @@ public class PlayerBehavior : MonoBehaviour
         
         // jump logic
         // jump has an initial force, slows down to reach a peak, then falls due to gravity
-        // can only happen while grounded
+        // can only happen while grounded and not climbing
         // if you jump, disable platform collision so you can jump through
         // however, this has to be re-enabled upon falling
-        if (Input.GetKeyDown(jumpButton) && isGrounded)
+        if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
         {
-            hasJumped = true;
-            
             // fun little bug happened:
             // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional
             // vertical velocity, thereby meaning you jumped higher.
@@ -91,14 +87,20 @@ public class PlayerBehavior : MonoBehaviour
             isGrounded = false;
         }
     }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Floor"))
+        {
+            _rb.gravityScale = gravity;
+        }
+    }
     
     void OnCollisionStay2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = true;
-            hasJumped = false;
-            _rb.gravityScale = gravity;
         }
     }
 
@@ -125,5 +127,31 @@ public class PlayerBehavior : MonoBehaviour
                 //Debug.Log(_rb.linearVelocityY);
             }
         }
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Ladder") && _verticalDirection != 0.0f) EnableClimbing();
+
+        if (other.gameObject.CompareTag("Ladder Top") && isGrounded && _verticalDirection < 0.0f) EnableClimbing();
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Ladder"))
+        {
+            isClimbing = false;
+            //isGrounded = true;
+            _rb.gravityScale = gravity;
+            _rb.excludeLayers = new LayerMask();
+        }
+    }
+
+    private void EnableClimbing()
+    {
+        isClimbing = true;
+        isGrounded = false;
+        _rb.gravityScale = 0.0f;
+        _rb.excludeLayers = LayerMask.GetMask("Floor");
     }
 }

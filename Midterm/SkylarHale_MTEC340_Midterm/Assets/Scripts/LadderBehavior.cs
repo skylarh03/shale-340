@@ -2,11 +2,16 @@ using UnityEngine;
 
 public class LadderBehavior : MonoBehaviour
 {
-    public GameObject HeightCollision;
+    public GameObject TopHeightCollision;
+    public GameObject BottomHeightCollision;
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        HeightCollision.SetActive(true);
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            TopHeightCollision.SetActive(true);
+            BottomHeightCollision.SetActive(true);
+        }
     }
 
     void OnTriggerStay2D(Collider2D collision)
@@ -15,15 +20,16 @@ public class LadderBehavior : MonoBehaviour
         // 1.5f for player climb speed. not sure how to pass that into here
         if (collision.gameObject.CompareTag("Player") && collision.attachedRigidbody.linearVelocityY > 1.5f)
         {
-            HeightCollision.SetActive(false);
+            TopHeightCollision.SetActive(false);
         }
     }
 
     void OnTriggerExit2D(Collider2D collision)
     {
-        if (HeightCollision.activeSelf)
+        if (collision.gameObject.CompareTag("Player"))
         {
-            HeightCollision.SetActive(false);
+            TopHeightCollision.SetActive(false);
+            BottomHeightCollision.SetActive(false);
         }
     }
 }

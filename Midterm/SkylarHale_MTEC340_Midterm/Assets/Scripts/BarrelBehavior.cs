@@ -42,6 +42,11 @@ public class BarrelBehavior : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            Destroy(gameObject);
+        }
+        
         if (_goingDownLadder)
         {
             if (collision.gameObject.CompareTag("Floor"))
@@ -68,7 +73,7 @@ public class BarrelBehavior : MonoBehaviour
     private IEnumerator GoDownLadder()
     {
         _goingDownLadder = true;
-        _rb.excludeLayers = LayerMask.GetMask("Floor");
+        _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Height Cap"); // ignores ladder height cap in case it goes down a ladder the player is on
         
         // the faster the barrel speed is, the shorter time it takes to re-enable collision
         // the slower the barrel speed is, the longer time it takes to re-enable collision
