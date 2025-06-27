@@ -3,8 +3,8 @@ using System.Collections;
 
 public class BarrelSpawner : MonoBehaviour
 {
-    public float minTime = 5.0f;
-    public float maxTime = 8.0f;
+    public float minimumSpawnInterval = 5.0f;
+    public float maximumSpawnInterval = 8.0f;
     
     public GameObject barrelPrefab;
     
@@ -15,7 +15,7 @@ public class BarrelSpawner : MonoBehaviour
     {
         if (!isWaiting)
         {
-            StartCoroutine(SpawnBarrel(minTime, maxTime));
+            StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval));
         }
     }
 
