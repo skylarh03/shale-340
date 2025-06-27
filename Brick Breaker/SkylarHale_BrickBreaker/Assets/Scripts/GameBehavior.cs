@@ -5,6 +5,17 @@ using UnityEngine.SceneManagement;
 public class GameBehavior : MonoBehaviour
 {
     public static GameBehavior Instance;
+
+    public enum GameState
+    {
+        Play,
+        Pause,
+        GameOver
+    };
+
+    public GameState CurrentState;
+
+    [SerializeField] private TMP_Text _messagesUI;
     
     [Header("Game Parameters")]
     public float PaddleSpeed = 5.0f;
@@ -30,8 +41,15 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private GameObject brickLayoutInstance;
     [SerializeField] private GameObject ball;
 
-    private int bricksToDestroy = 33;
-    private int bricksDestroyed = 0;
+    public int bricksToDestroy = 33;
+    public int bricksDestroyed = 0;
+
+    [Header("Audio")] 
+    [SerializeField] private AudioSource _musicSource;
+    private AudioSource _uiSfxSource;
+    [SerializeField] private AudioClip _lifeUpClip;
+
+    private bool givenBonusLife = false;
 
     void Awake()
     {
@@ -52,26 +70,56 @@ public class GameBehavior : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        CurrentState = GameState.Play;
+        _messagesUI.enabled = false;
+        
+        _uiSfxSource = GetComponent<AudioSource>();
+        
         ResetGame();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            if (CurrentState == GameState.Play)
+            {
+                CurrentState = GameState.Pause;
+                _messagesUI.enabled = true;
+            }
+            else if (CurrentState == GameState.Pause)
+            {
+                CurrentState = GameState.Play;
+                _messagesUI.enabled = false;
+            }
+            
+            PlayUISound();
+        }
+
+        if (Lives <= 0 || bricksDestroyed >= bricksToDestroy)
+        {
+            CurrentState = GameState.GameOver;
+        }
         
+        // life bonus every 3000 points
+        if (Score % 3000 == 0 && Score != 0 && !givenBonusLife)
+        {
+            Lives++;
+            LivesText.text = Lives.ToString();
+            _uiSfxSource.PlayOneShot(_lifeUpClip);
+            givenBonusLife = true;
+        }
+        else if (Score % 3000 != 0 && givenBonusLife)
+        {
+            givenBonusLife = false;
+        }
     }
 
     public void ScorePoints(int points)
     {
         Score += points;
-        bricksDestroyed++;
         ScoreText.text = Score.ToString();
-        
-        // check if enough bricks have been destroyed
-        if (bricksDestroyed >= bricksToDestroy)
-        {
-            Victory();
-        }
     }
 
     public void LoseLife()
@@ -83,6 +131,7 @@ public class GameBehavior : MonoBehaviour
     public void GameOver()
     {
         GameOverPanel.SetActive(true);
+        _musicSource.pitch = 0.85f;
     }
 
     public void Victory()
@@ -91,7 +140,7 @@ public class GameBehavior : MonoBehaviour
         VictoryPanel.SetActive(true);
     }
 
-    void StopBall()
+    public void StopBall()
     {
         ball.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
     }
@@ -99,6 +148,7 @@ public class GameBehavior : MonoBehaviour
     public void ResetGame()
     {
         GameOverPanel.SetActive(false);
+        CurrentState = GameState.Play;
         Destroy(brickLayoutInstance);
         brickLayoutInstance = Instantiate(brickLayoutPrefab); // resets brick layout to what it is in the default prefab
         
@@ -110,11 +160,14 @@ public class GameBehavior : MonoBehaviour
         LevelText.text = Level.ToString();
         
         bricksDestroyed = 0;
+
+        _musicSource.pitch = 1f;
     }
 
     public void NextLevel()
     {
         VictoryPanel.SetActive(false);
+        CurrentState = GameState.Play;
         Destroy(brickLayoutInstance);
         brickLayoutInstance = Instantiate(brickLayoutPrefab); // resets brick layout to what it is in the default prefab
         
@@ -124,5 +177,10 @@ public class GameBehavior : MonoBehaviour
         LevelText.text = Level.ToString();
         
         bricksDestroyed = 0;
+    }
+
+    public void PlayUISound()
+    {
+        _uiSfxSource.Play();
     }
 }

@@ -33,7 +33,16 @@ public class PaddleMovement : MonoBehaviour
         // define direction based on player input
         _direction = 0.0f;
 
-        if (Input.GetKey(_rightDirection)) _direction += 1f;
-        if (Input.GetKey(_leftDirection)) _direction -= 1f;
+        if (GameBehavior.Instance.CurrentState == GameBehavior.GameState.Play)
+        {
+            if (Input.GetKey(_rightDirection)) _direction += 1f;
+            if (Input.GetKey(_leftDirection)) _direction -= 1f;
+        }
+        
+        else if (GameBehavior.Instance.CurrentState == GameBehavior.GameState.GameOver)
+        {
+            // reset paddle position upon game over
+            _rb.MovePosition(new Vector2(0, _rb.position.y));
+        }
     }
 }

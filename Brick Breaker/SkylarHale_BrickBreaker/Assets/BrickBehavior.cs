@@ -1,14 +1,15 @@
-using System;
 using UnityEngine;
 
 public class BrickBehavior : MonoBehaviour
 {
-    private Color[] _colors = new Color[7]
-        {Color.blue, Color.cyan, Color.green, Color.magenta, Color.red, Color.white, Color.yellow};
+    private readonly Color[] _colors = new Color[7]
+        {Color.white, Color. green, Color.blue, Color.cyan, Color.red, Color.magenta, Color.yellow};
 
     [SerializeField] private Color activeColor = Color.white;
 
-    public int value = 100;
+    public int ScoreValue = 100;
+
+    private int brickLives = 1;
     
     private SpriteRenderer _sr;
     
@@ -29,47 +30,46 @@ public class BrickBehavior : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
-            // add brick's value to player's score
-            GameBehavior.Instance.ScorePoints(value);
+            // add brick's ScoreValue to player's score
+            GameBehavior.Instance.ScorePoints(ScoreValue);
             
-            // get rid of brick
-            Destroy(gameObject);
+            // lower brickLives by 1. if it hits 0, destroy the brick
+            brickLives--;
+            if (brickLives == 0)
+            {
+                Destroy(gameObject);
+                GameBehavior.Instance.bricksDestroyed++;
+            }
+            else _sr.color = _colors[brickLives - 1];
+
+            if (GameBehavior.Instance.bricksDestroyed == GameBehavior.Instance.bricksToDestroy)
+            {
+                GameBehavior.Instance.StopBall();
+                GameBehavior.Instance.Victory();
+            }
         }
     }
 
     // randomize color of brick upon initialization
-    // depending on the color, update its score value
+    // depending on the color, update its score ScoreValue
     void RandomizeSpriteColor()
     {
-        int colorIndex = UnityEngine.Random.Range(0, _colors.Length);
+        int colorIndex;
+        float randomPercent = Random.Range(0.0f, 1.0f);
+        
+        // assign color index based on percentage values
+        if (randomPercent < 0.35f) colorIndex = 0;
+        else if (randomPercent < 0.60f) colorIndex = 1;
+        else if (randomPercent < 0.80f) colorIndex = 2;
+        else if (randomPercent < 0.90f) colorIndex = 3;
+        else if (randomPercent < 0.95f) colorIndex = 4;
+        else if (randomPercent < 0.99f) colorIndex = 5;
+        else colorIndex = 6;
         
         _sr.color = _colors[colorIndex];
         activeColor = _sr.color; // for inspector viewing on the script component
         
-        // depending on the color, assign new score value
-        switch (colorIndex)
-        {
-            case 0: // blue
-                value = 300;
-                break;
-            case 1: // cyan
-                value = 400;
-                break;
-            case 2: // green
-                value = 200;
-                break;
-            case 3: // magenta
-                value = 600;
-                break;
-            case 4: // red
-                value = 500;
-                break;
-            case 5: // white
-                value = 100;
-                break;
-            case 6:
-                value = 700;
-                break;
-        }
+        // depending on the color, assign new amount of lives
+        brickLives = colorIndex + 1;
     }
 }
