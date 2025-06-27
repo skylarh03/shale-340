@@ -1,10 +1,15 @@
 using UnityEngine;
+using TMPro;
 
 // manager class - instance of the game
 // software design pattern - singleton pattern
 public class GameBehavior : MonoBehaviour
 {
     public static GameBehavior Instance;
+
+    public Utilities.GameState CurrentState;
+    
+    [SerializeField] private TMP_Text _messagesGUI;
 
     public float PaddleSpeed = 5.0f;
     public float InitBallForce = 5.0f;
@@ -36,12 +41,36 @@ public class GameBehavior : MonoBehaviour
     void Start()
     {
         ResetGame();
+
+        CurrentState = Utilities.GameState.Play;
+        _messagesGUI.enabled = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        // game state transition
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            // // condition ? pass : fail
+            // CurrentState = CurrentState == Utilities.GameState.Play
+            //     ? Utilities.GameState.Pause
+            //     : Utilities.GameState.Play;
+
+            switch (CurrentState)
+            {
+                case Utilities.GameState.Play:
+                    CurrentState = Utilities.GameState.Pause;
+                    _messagesGUI.enabled = true;
+                    break;
+                case Utilities.GameState.Pause:
+                    CurrentState = Utilities.GameState.Play;
+                    _messagesGUI.enabled = false;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     public void ScorePoint(int playerNum)

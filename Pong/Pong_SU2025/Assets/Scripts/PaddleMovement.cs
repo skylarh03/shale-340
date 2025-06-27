@@ -19,6 +19,9 @@ public class PaddleMovement : MonoBehaviour
         _rb.linearDamping = 0.0f;
         _rb.angularDamping = 0.0f;
         _rb.gravityScale = 0.0f;
+        
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.color = Utilities.Colors[Random.Range(0, Utilities.Colors.Length)];
     }
 
     void FixedUpdate()
@@ -33,7 +36,10 @@ public class PaddleMovement : MonoBehaviour
         // define direction based on player input
         _direction = 0.0f;
 
-        if (Input.GetKey(_upDirection)) _direction += 1f;
-        if (Input.GetKey(_downDirection)) _direction -= 1f;
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            if (Input.GetKey(_upDirection)) _direction += 1f;
+            if (Input.GetKey(_downDirection)) _direction -= 1f;
+        }
     }
 }
