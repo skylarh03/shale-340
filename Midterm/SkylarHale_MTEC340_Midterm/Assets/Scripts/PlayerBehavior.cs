@@ -19,6 +19,7 @@ public class PlayerBehavior : MonoBehaviour
     
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
+    [SerializeField] private bool isJumping = false;
     
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -65,6 +66,8 @@ public class PlayerBehavior : MonoBehaviour
         // however, this has to be re-enabled upon falling
         if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
         {
+            isJumping = true;
+            
             // fun little bug happened:
             // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional
             // vertical velocity, thereby meaning you jumped higher.
@@ -93,6 +96,7 @@ public class PlayerBehavior : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             _rb.gravityScale = gravity;
+            isJumping = false;
         }
     }
     
@@ -101,6 +105,7 @@ public class PlayerBehavior : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             isGrounded = true;
+            isJumping = false;
         }
     }
 
@@ -123,9 +128,19 @@ public class PlayerBehavior : MonoBehaviour
             if (_rb.linearVelocityY < -1.0f) // -1.0f so the player doesn't snap through collision at the apex of their jump
             {
                 isGrounded = true;
+                isJumping = false;
                 _rb.excludeLayers = new LayerMask();
                 //Debug.Log(_rb.linearVelocityY);
             }
+        }
+
+        // scoring
+        // player jumps over barrel/enemy to score points
+        // MUST be jumping. they can't be hanging on a ladder and farm points
+        if (other.gameObject.CompareTag("Score Zone") && isJumping)
+        {
+            //Debug.Log("Scoring for jumping over barrel");
+            GameBehavior.Instance.ScorePoints();
         }
     }
 
@@ -150,6 +165,7 @@ public class PlayerBehavior : MonoBehaviour
     private void EnableClimbing()
     {
         isClimbing = true;
+        isJumping = false;
         isGrounded = false;
         _rb.gravityScale = 0.0f;
         _rb.excludeLayers = LayerMask.GetMask("Floor");

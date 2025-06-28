@@ -9,8 +9,8 @@ public class FireEnemySpawner : MonoBehaviour
     
     [SerializeField] private GameObject firePrefab;
 
-    [SerializeField] private float minimumSpawnInterval;
-    [SerializeField] private float maximumSpawnInterval;
+    public float minimumSpawnInterval;
+    public float maximumSpawnInterval;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

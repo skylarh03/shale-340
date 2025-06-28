@@ -8,8 +8,8 @@ public class FireEnemyBehavior : MonoBehaviour
     [SerializeField] private GameObject lineOfSightLeft;
     
     [Header("Movement Parameters")]
-    [SerializeField] private float defaultSpeed = 1.0f;
-    [SerializeField] private float chaseSpeed = 1.75f;
+    public float defaultSpeed = 1.0f;
+    public float chaseSpeed = 1.75f;
     private float currentSpeed;
 
     private float _direction = 0.0f;
@@ -39,6 +39,8 @@ public class FireEnemyBehavior : MonoBehaviour
         if (doesSeePlayer && !isChasing)
         {
             isChasing = true;
+            isClimbing = false;
+            _verticalDirection = 0.0f;
             StopAllCoroutines();
         }
     }
@@ -79,7 +81,8 @@ public class FireEnemyBehavior : MonoBehaviour
             else if  (other.transform.position.x > _rb.position.x) _direction = 1.0f;
         }
         
-        if (other.gameObject.CompareTag("Ladder"))
+        // can only climb if not chasing
+        if (other.gameObject.CompareTag("Ladder") && !isChasing)
         {
             // if enemy is not currently climbing and is colliding with a ladder, set a 1% chance for every frame colliding to override all current movement and start climbing the ladder
             if (!isClimbing && Random.Range(0.0f, 1.0f) < 0.01)
@@ -90,7 +93,7 @@ public class FireEnemyBehavior : MonoBehaviour
             }
         }
 
-        if (other.gameObject.CompareTag("Ladder Top"))
+        if (other.gameObject.CompareTag("Ladder Top") && !isChasing)
         {
             if (!isClimbing && Random.Range(0.0f, 1.0f) < 0.01)
             {
@@ -112,10 +115,18 @@ public class FireEnemyBehavior : MonoBehaviour
 
         if (other.gameObject.CompareTag("Player"))
         {
-            doesSeePlayer = false;
-            isChasing = false;
-            _direction = 0.0f; // reset direction before triggering wait
-            StartCoroutine(IdleWaitLong());
+            Debug.Log(other.attachedRigidbody.position);
+            Debug.Log(_rb.position);
+            
+            // if player is above fire enemy, add to score
+            if (Mathf.Abs(other.attachedRigidbody.position.x - _rb.position.x) < 0.7f &&
+                other.attachedRigidbody.position.y > _rb.position.y)
+            {
+                Debug.Log("player jumped over fire enemy");
+                GameBehavior.Instance.ScorePoints();
+            }
+            
+            StartCoroutine(EndChase());
         }
     }
 
@@ -124,7 +135,7 @@ public class FireEnemyBehavior : MonoBehaviour
         //Debug.Log("isClimbing = true");
         isClimbing = true;
         _rb.gravityScale = 0;
-        _rb.excludeLayers = LayerMask.GetMask("Floor", "Barrel");
+        _rb.excludeLayers = LayerMask.GetMask("Floor", "Barrel", "Fire Enemy");
         _direction = 0;
     }
 
@@ -132,7 +143,7 @@ public class FireEnemyBehavior : MonoBehaviour
     {
         isClimbing = false;
         _rb.gravityScale = 1;
-        _rb.excludeLayers = LayerMask.GetMask("Barrel");
+        _rb.excludeLayers = LayerMask.GetMask("Barrel", "Fire Enemy");
         _verticalDirection = 0;
     }
 
@@ -165,6 +176,17 @@ public class FireEnemyBehavior : MonoBehaviour
         StartCoroutine(IdleWait());
     }
 
+    IEnumerator EndChase()
+    {
+        // enemy keeps moving in current direction for set amount of time, then waits before going back to idle movement
+        yield return new WaitForSeconds(Random.Range(0.5f, 1.5f));
+        
+        doesSeePlayer = false;
+        isChasing = false;
+        _direction = 0.0f; // reset direction before triggering wait
+        StartCoroutine(IdleWaitLong());
+    }
+
     IEnumerator IdleWait()
     {
         yield return new WaitForSeconds(Random.Range(0.0f, 0.3f));
@@ -187,7 +209,7 @@ public class FireEnemyBehavior : MonoBehaviour
     {
         _verticalDirection = -1.0f;
         yield return new WaitForSeconds(1 / defaultSpeed); // same as player climbing down. inverse function according to speed, so the faster they climb the sooner collision re-enables
-        _rb.excludeLayers = new LayerMask();
+        _rb.excludeLayers = LayerMask.GetMask("Barrel", "Fire Enemy");
         yield return new WaitUntil(() => !isClimbing);
     }
 }
