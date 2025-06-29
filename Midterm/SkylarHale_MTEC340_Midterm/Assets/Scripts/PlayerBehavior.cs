@@ -17,6 +17,7 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private float climbSpeed = 5.0f;
     [SerializeField] private float jumpForce;
     [SerializeField] private float gravity = 1.0f;
+    private Vector2 _initialPosition;
     
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
@@ -47,6 +48,8 @@ public class PlayerBehavior : MonoBehaviour
         _rb.linearDamping = 0.0f;
         _rb.angularDamping = 0.0f;
         _rb.gravityScale = gravity;
+        
+        _initialPosition = _rb.position;
     }
 
     void FixedUpdate()
@@ -71,8 +74,9 @@ public class PlayerBehavior : MonoBehaviour
             if (Input.GetKey(rightDirection)) _direction += 1f;
             if (Input.GetKey(leftDirection)) _direction -= 1f;
 
-            if (Input.GetKey(upDirection)) _verticalDirection += 1f;
-            if (Input.GetKey(downDirection)) _verticalDirection -= 1f;
+            // only allow vertical input if NOT using hammer
+            if (Input.GetKey(upDirection) && !isHammer) _verticalDirection += 1f;
+            if (Input.GetKey(downDirection) && !isHammer) _verticalDirection -= 1f;
         }
         
         // jump logic
@@ -138,8 +142,8 @@ public class PlayerBehavior : MonoBehaviour
         // collide with barrel, trigger death
         if (collision.gameObject.CompareTag("Barrel") || collision.gameObject.CompareTag("Fire Enemy"))
         {
-            GameBehavior.Instance.CurrentState = Utilities.GameState.Death;
-            StartCoroutine(Death());
+            GameBehavior.Instance.LoseHealth();
+            if (GameBehavior.Instance.CurrentState == Utilities.GameState.Death) StartCoroutine(Death());
         }
     }
     
@@ -176,15 +180,6 @@ public class PlayerBehavior : MonoBehaviour
                 //Debug.Log(_rb.linearVelocityY);
             }
         }
-
-        // scoring
-        // player jumps over barrel/enemy to score points
-        // MUST be jumping. they can't be hanging on a ladder and farm points
-        if (other.gameObject.CompareTag("Score Zone") && isJumping)
-        {
-            //Debug.Log("Scoring for jumping over barrel");
-            GameBehavior.Instance.ScorePoints();
-        }
         
         // powerup activation
         if (other.gameObject.CompareTag("Powerup"))
@@ -200,6 +195,16 @@ public class PlayerBehavior : MonoBehaviour
         if (other.gameObject.CompareTag("Ladder") && _verticalDirection != 0.0f) EnableClimbing();
 
         if (other.gameObject.CompareTag("Ladder Top") && isGrounded && _verticalDirection < 0.0f) EnableClimbing();
+        
+        // if player is in win level trigger, is not climbing, is currently in play state and has not been detected to have already
+        // won the level, move to win level state.
+        // this gets rid of active obstacles in level and plays music before allowing player to move to ladders to progress
+        // to the next level.
+        if (other.gameObject.CompareTag("Win Level Trigger") &&
+            GameBehavior.Instance.CurrentState == Utilities.GameState.Play && !isClimbing && !GameBehavior.Instance.HasWonLevel)
+        {
+            GameBehavior.Instance.CurrentState = Utilities.GameState.WinLevel;
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -224,12 +229,13 @@ public class PlayerBehavior : MonoBehaviour
         _rb.excludeLayers = LayerMask.GetMask("Floor");
     }
 
-    private void ResetPlayer()
+    public void ResetPlayer()
     {
+        isAlive = true;
         _rb.excludeLayers = new LayerMask();
         _rb.gravityScale = gravity;
         _rb.linearVelocity = Vector2.zero;
-        _rb.position = new Vector2(-3.744f, -3.971f);
+        _rb.position = _initialPosition;
     }
 
     IEnumerator HammerPowerup()
@@ -251,9 +257,9 @@ public class PlayerBehavior : MonoBehaviour
     
     IEnumerator Death()
     {
-        Debug.Log("player death coroutine called");
+        //Debug.Log("player death coroutine called");
         
-        // spin sprite around for a second, wait a second, then sprite falls to signal death
+        // syncing animation to sound, will have a lot of very specific WaitForSeconds() times
         _direction = 0.0f;
         _verticalDirection = 0.0f;
         _rb.linearVelocity = Vector2.zero;
@@ -262,15 +268,18 @@ public class PlayerBehavior : MonoBehaviour
         isAlive = false;
         
         _rb.excludeLayers = LayerMask.GetMask("Floor", "Barrel", "Fire Enemy", "Default", "Ladder", "Ladder Top");
+
+        yield return new WaitForSeconds(0.59f);
         
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 16; i++)
         {
             _rb.rotation -= 45;
-            yield return new WaitForSeconds(0.125f);
+            yield return new WaitForSeconds(0.11f);
         }
 
-        yield return new WaitForSeconds(0.75f);
+        yield return new WaitForSeconds(0.14f);
         _rb.linearVelocityY = -1.5f;
-        yield return new WaitForSeconds(3.0f);
+        yield return new WaitForSeconds(1.16f);
+        _rb.linearVelocityY = 0.0f;
     }
 }

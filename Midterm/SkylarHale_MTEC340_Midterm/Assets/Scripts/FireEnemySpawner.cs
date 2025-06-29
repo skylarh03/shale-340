@@ -21,6 +21,11 @@ public class FireEnemySpawner : MonoBehaviour
     void Update()
     {
         if (!isWaiting) StartCoroutine(SpawnFire());
+        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
+        {
+            StopAllCoroutines();
+            isWaiting = true; // set to true because if this happens, the gameobject will be destroyed shortly
+        }
     }
 
     IEnumerator InitialWait()

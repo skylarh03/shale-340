@@ -17,6 +17,12 @@ public class BarrelSpawner : MonoBehaviour
         {
             StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval));
         }
+
+        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
+        {
+            StopAllCoroutines();
+            isWaiting = true; // set to true because if this happens, the gameobject will be destroyed shortly
+        }
     }
 
     IEnumerator SpawnBarrel(float minWait, float maxWait)

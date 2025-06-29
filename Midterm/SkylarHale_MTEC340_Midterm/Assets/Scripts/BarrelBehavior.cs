@@ -13,12 +13,19 @@ public class BarrelBehavior : MonoBehaviour
 
     [SerializeField] private bool _goingDownLadder = false;
 
+    [SerializeField] private GameObject _pointsScored;
+    private bool _hasBeenScored = false;
+
     private Rigidbody2D _rb;
+    private SpriteRenderer _sr;
+    private CircleCollider2D _circleCollider;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _sr = GetComponent<SpriteRenderer>();
+        _circleCollider = GetComponent<CircleCollider2D>();
 
         barrelSpeedY = barrelSpeedX / 2;
 
@@ -31,7 +38,12 @@ public class BarrelBehavior : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.Log(_rb.linearVelocity);
+        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
+        {
+            _directionX = 0.0f;
+            _rb.linearVelocity = Vector2.zero;
+            _pointsScored.SetActive(false);
+        }
     }
 
     void FixedUpdate()
@@ -74,16 +86,27 @@ public class BarrelBehavior : MonoBehaviour
     {
         float num = Random.Range(0, 100);
 
-        if (other.gameObject.CompareTag("Destroy Barrel") || other.gameObject.CompareTag("Hammer"))
+        if (other.gameObject.CompareTag("Destroy Barrel"))
         {
             GameBehavior.Instance.ActiveBarrels.Remove(gameObject);
             Destroy(gameObject);
-            
-            // add to score only if it collides with hammer
-            if (other.gameObject.CompareTag("Hammer")) GameBehavior.Instance.ScorePoints();
         }
         
-        else if (other.gameObject.CompareTag("Barrel Descend") && num < ladderDescendChance) StartCoroutine(GoDownLadder());
+        if (other.gameObject.CompareTag("Hammer"))
+        {
+            GameBehavior.Instance.ScorePoints();
+            StartCoroutine(ShowPointsScoredAfterHammer());
+        }
+        
+        if (other.gameObject.CompareTag("Barrel Descend") && num < ladderDescendChance) StartCoroutine(GoDownLadder());
+        
+        // show points scored if player jumps over
+        if (other.gameObject.CompareTag("Player") && !_hasBeenScored)
+        {
+            _hasBeenScored = true;
+            GameBehavior.Instance.ScorePoints();
+            StartCoroutine(ShowPointsScored());
+        }
     }
 
     private IEnumerator GoDownLadder()
@@ -95,5 +118,32 @@ public class BarrelBehavior : MonoBehaviour
         // the slower the barrel speed is, the longer time it takes to re-enable collision
         yield return new WaitForSeconds(1.0f / barrelSpeedY);
         _rb.excludeLayers = new LayerMask(); // allow for floor collision again after barrel descends through the upper floor
+    }
+
+    IEnumerator ShowPointsScored()
+    {
+        _pointsScored.SetActive(true);
+        yield return new WaitForSeconds(0.6f);
+        _pointsScored.SetActive(false);
+    }
+
+    IEnumerator ShowPointsScoredAfterHammer()
+    {
+        // visually kills barrel, but doesn't actually destroy gameobject so we can still show score text
+        _sr.enabled = false;
+        _circleCollider.enabled = false;
+        _rb.excludeLayers = LayerMask.GetMask("Default");
+        _rb.gravityScale = 0.0f;
+        
+        // remove any direction influence so score text says in one place
+        _directionX = 0.0f;
+        barrelSpeedY = 0.0f;
+        _rb.linearVelocityY = 0.0f;
+        
+        StartCoroutine(ShowPointsScored());
+        
+        yield return new WaitForSeconds(0.6f);
+        GameBehavior.Instance.ActiveBarrels.Remove(gameObject);
+        Destroy(gameObject);
     }
 }

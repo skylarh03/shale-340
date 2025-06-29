@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameBehavior : MonoBehaviour
 {
@@ -11,7 +13,10 @@ public class GameBehavior : MonoBehaviour
     public Utilities.GameState CurrentState;
 
     [Header("Player Properties")]
-    [SerializeField] private int _lives = 3;
+    [SerializeField] private PlayerBehavior _player;
+    [SerializeField] private int _health = 3;
+    [SerializeField] private int _maxHealth = 3;
+    public bool HasWonLevel = false;
 
     [SerializeField] private bool _playerIsAlive = true;
     [SerializeField] private PlayerScore _playerScore;
@@ -38,7 +43,16 @@ public class GameBehavior : MonoBehaviour
     public AudioSource SFX;
     public AudioClip LevelMusic;
     public AudioClip PowerupMusic;
+    public AudioClip DeathMusic;
+    public AudioClip WinLevelMusic;
+    public AudioClip VictoryMusic;
     [SerializeField] private AudioClip _scoreSFX;
+    [SerializeField] private AudioClip _playerHurtSFX;
+
+    [Header("UI")]
+    // score text is already handled, this is just for HP and level
+    [SerializeField] private TMP_Text _healthText;
+    [SerializeField] private TMP_Text _levelText;
     
     // initializer: runs before start()
     void Awake()
@@ -68,6 +82,10 @@ public class GameBehavior : MonoBehaviour
         _fireSpawnerInst.SetActive(true);
         
         SFX = GetComponent<AudioSource>();
+        
+        // initialize UI attributes
+        _healthText.text = $"{_health}/{_maxHealth} HP";
+        _levelText.text = _currentLevel.ToString();
     }
 
     void Update()
@@ -76,6 +94,11 @@ public class GameBehavior : MonoBehaviour
         {
             _playerIsAlive = false;
             StartCoroutine(PlayerDeathEvents()); // waits for player death animation to play, then resets game
+        }
+        else if (CurrentState == Utilities.GameState.WinLevel && !HasWonLevel)
+        {
+            HasWonLevel = true;
+            StartCoroutine(PlayerWinLevel());
         }
     }
 
@@ -87,26 +110,35 @@ public class GameBehavior : MonoBehaviour
         SFX.PlayOneShot(_scoreSFX);
     }
 
-    public void LoseLife()
+    public void LoseHealth()
     {
-        _lives--;
-        if (_lives == 0)
+        _health--;
+        _healthText.text = $"{_health}/{_maxHealth} HP";
+        if (_health == 0)
         {
-            ResetGame();
+            CurrentState = Utilities.GameState.Death;
+        }
+        else
+        {
+            // since there's already a separate sound playing for death, play a damage sound otherwise
+            Utilities.PlaySound(SFX, _playerHurtSFX);
         }
     }
 
     public void NextLevel()
     {
         _currentLevel++;
+        _levelText.text = _currentLevel.ToString();
     }
     
-    void ResetGame()
+    public void ResetGame()
     {
-        _lives = 3;
+        _health = 3;
+        _healthText.text = $"{_health}/{_maxHealth} HP";
         _playerScore.Score = 0;
         _playerIsAlive = true;
         _currentLevel = 1;
+        _levelText.text = _currentLevel.ToString();
         
         // reset all prefab and object parameters to default values
         _barrelPrefab.GetComponent<BarrelBehavior>().barrelSpeedX = 3.0f;
@@ -126,6 +158,10 @@ public class GameBehavior : MonoBehaviour
         
         _fireSpawnerInst = Instantiate(_fireSpawnerPrefab);
         _fireSpawnerInst.SetActive(true);
+
+        _player.ResetPlayer();
+        
+        Utilities.PlaySound(Music, LevelMusic, loop: true);
         
         CurrentState = Utilities.GameState.Play;
     }
@@ -135,13 +171,34 @@ public class GameBehavior : MonoBehaviour
         Destroy(_barrelSpawnerInst);
         Destroy(_fireSpawnerInst);
         
-        yield return new WaitForSeconds(4.75f);
+        Utilities.PlaySound(Music, DeathMusic);
         
+        yield return new WaitForSeconds(3.65f);
+        
+        DestroyAllActiveObjects();
+        CurrentState = Utilities.GameState.GameOver;
+        SceneManager.LoadScene("Scenes/GameOver", LoadSceneMode.Additive);
+    }
+
+    IEnumerator PlayerWinLevel()
+    {
+        Utilities.PlaySound(Music, WinLevelMusic);
+        yield return new WaitForSeconds(2.0f);
+        
+        DestroyAllActiveObjects();
+        Utilities.PlaySound(Music, VictoryMusic, loop: true);
+        CurrentState =  Utilities.GameState.Play;
+    }
+
+    void DestroyAllActiveObjects()
+    {
         // destroy all active obstacles and spawner instances, empty lists, then reset the game
         ActiveBarrels.ForEach(x => Destroy(x));
         ActiveBarrels.RemoveAll(x=>x);
+        Destroy(_barrelSpawnerInst);
 
         ActiveFireEnemies.ForEach(x => Destroy(x));
         ActiveFireEnemies.RemoveAll(x=>x);
+        Destroy(_fireSpawnerInst);
     }
 }

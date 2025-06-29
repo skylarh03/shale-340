@@ -4,6 +4,7 @@ using System.Collections;
 public class FireEnemyBehavior : MonoBehaviour
 {
     [SerializeField] private int _lifetime = 120;
+    [SerializeField] private GameObject _pointsScored;
     
     [Header("Lines of Sight")]
     [SerializeField] private GameObject lineOfSightRight;
@@ -25,11 +26,15 @@ public class FireEnemyBehavior : MonoBehaviour
     [SerializeField] private bool isAlive = true;
     
     private Rigidbody2D _rb;
+    private SpriteRenderer _sr;
+    private CircleCollider2D _circleCollider;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _sr = GetComponent<SpriteRenderer>();
+        _circleCollider = GetComponent<CircleCollider2D>();
         _rb.linearDamping = 0;
         _rb.angularDamping = 0;
         _rb.gravityScale = 1;
@@ -50,6 +55,14 @@ public class FireEnemyBehavior : MonoBehaviour
             _verticalDirection = 0.0f;
             StopAllCoroutines();
             StartCoroutine(DecreaseLifetime()); // this one should always be running until enemy despawns
+        }
+
+        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
+        {
+            _direction = 0.0f;
+            _verticalDirection = 0.0f;
+            _rb.linearVelocity = Vector2.zero;
+            _pointsScored.SetActive(false);
         }
     }
 
@@ -88,13 +101,15 @@ public class FireEnemyBehavior : MonoBehaviour
             doesSeePlayer = true;
             //_direction = 0.0f;
             currentSpeed = chaseSpeed;
+            
+            // display points scored if player is above fire enemy
+            
         }
 
         if (other.gameObject.CompareTag("Hammer"))
         {
-            GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
-            Destroy(gameObject);
             GameBehavior.Instance.ScorePoints();
+            StartCoroutine(ShowPointsScoredAfterHammer());
         }
     }
     
@@ -143,15 +158,17 @@ public class FireEnemyBehavior : MonoBehaviour
 
         if (other.gameObject.CompareTag("Player"))
         {
-            Debug.Log(other.attachedRigidbody.position);
-            Debug.Log(_rb.position);
+            // Debug.Log(other.attachedRigidbody.position);
+            // Debug.Log(_rb.position);
             
             // if player is above fire enemy, add to score
-            if (Mathf.Abs(other.attachedRigidbody.position.x - _rb.position.x) < 0.7f &&
+            // since there are multiple triggers already, just opted for checking positions instead
+            if (Mathf.Abs(other.attachedRigidbody.position.x - _rb.position.x) < 1.0f &&
                 other.attachedRigidbody.position.y > _rb.position.y)
             {
                 Debug.Log("player jumped over fire enemy");
                 GameBehavior.Instance.ScorePoints();
+                StartCoroutine(ShowPointsScored());
             }
             
             StartCoroutine(EndChase());
@@ -257,5 +274,29 @@ public class FireEnemyBehavior : MonoBehaviour
                 yield return new WaitForSeconds(1f);
             }
         }
+    }
+    
+    IEnumerator ShowPointsScored()
+    {
+        _pointsScored.SetActive(true);
+        yield return new WaitForSeconds(0.6f);
+        _pointsScored.SetActive(false);
+    }
+
+    IEnumerator ShowPointsScoredAfterHammer()
+    {
+        // visually kills barrel, but doesn't actually destroy gameobject so we can still show score text
+        _sr.enabled = false;
+        _circleCollider.enabled = false;
+        _rb.excludeLayers = LayerMask.GetMask("Default");
+        _rb.gravityScale = 0.0f;
+        _direction = 0.0f; // remove any direction influence so score text says in one place
+        _verticalDirection = 0.0f;
+        
+        StartCoroutine(ShowPointsScored());
+        
+        yield return new WaitForSeconds(0.6f);
+        GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
+        Destroy(gameObject);
     }
 }
