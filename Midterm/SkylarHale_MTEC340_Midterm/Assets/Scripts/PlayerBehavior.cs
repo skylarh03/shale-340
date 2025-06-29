@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -20,6 +21,13 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
     [SerializeField] private bool isJumping = false;
+
+    [Header("Hammer Powerup")] 
+    [SerializeField] private bool isHammer = false;
+    [SerializeField] private GameObject hammerLeft;
+    [SerializeField] private GameObject hammerRight;
+
+    private bool isAlive = true;
     
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -53,11 +61,15 @@ public class PlayerBehavior : MonoBehaviour
         _direction = 0.0f;
         _verticalDirection = 0.0f;
 
-        if (Input.GetKey(rightDirection)) _direction += 1f;
-        if (Input.GetKey(leftDirection)) _direction -= 1f;
+        // must be in play state for direction to be applied
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            if (Input.GetKey(rightDirection)) _direction += 1f;
+            if (Input.GetKey(leftDirection)) _direction -= 1f;
 
-        if (Input.GetKey(upDirection)) _verticalDirection += 1f;
-        if (Input.GetKey(downDirection)) _verticalDirection -= 1f;
+            if (Input.GetKey(upDirection)) _verticalDirection += 1f;
+            if (Input.GetKey(downDirection)) _verticalDirection -= 1f;
+        }
         
         // jump logic
         // jump has an initial force, slows down to reach a peak, then falls due to gravity
@@ -89,6 +101,23 @@ public class PlayerBehavior : MonoBehaviour
             _rb.excludeLayers = LayerMask.GetMask("Floor");
             isGrounded = false;
         }
+        
+        // hammer powerup
+        // if it's active, change the way the hammer is facing depending on which way the player is facing
+        // kind of faking this by having two hammer game objects that will alternate SetActive() status
+        if (isHammer)
+        {
+            if (_direction < 0.0f)
+            {
+                hammerLeft.SetActive(true);
+                hammerRight.SetActive(false);
+            }
+            else if (_direction > 0.0f)
+            {
+                hammerLeft.SetActive(false);
+                hammerRight.SetActive(true);
+            }
+        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -97,6 +126,13 @@ public class PlayerBehavior : MonoBehaviour
         {
             _rb.gravityScale = gravity;
             isJumping = false;
+        }
+        
+        // collide with barrel, trigger death
+        if (collision.gameObject.CompareTag("Barrel") || collision.gameObject.CompareTag("Fire Enemy"))
+        {
+            GameBehavior.Instance.CurrentState = Utilities.GameState.Death;
+            StartCoroutine(Death());
         }
     }
     
@@ -142,6 +178,14 @@ public class PlayerBehavior : MonoBehaviour
             //Debug.Log("Scoring for jumping over barrel");
             GameBehavior.Instance.ScorePoints();
         }
+        
+        // powerup activation
+        if (other.gameObject.CompareTag("Powerup"))
+        {
+            other.gameObject.SetActive(false);
+            isHammer = true;
+            StartCoroutine(HammerPowerup());
+        }
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -153,7 +197,9 @@ public class PlayerBehavior : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Ladder"))
+        // for some reason this runs ALSO when updating layer overrides in death coroutine?
+        // just run this if the player is alive as well i guess
+        if (other.gameObject.CompareTag("Ladder") && isAlive)
         {
             isClimbing = false;
             //isGrounded = true;
@@ -169,5 +215,55 @@ public class PlayerBehavior : MonoBehaviour
         isGrounded = false;
         _rb.gravityScale = 0.0f;
         _rb.excludeLayers = LayerMask.GetMask("Floor");
+    }
+
+    private void ResetPlayer()
+    {
+        _rb.excludeLayers = new LayerMask();
+        _rb.gravityScale = gravity;
+        _rb.linearVelocity = Vector2.zero;
+        _rb.position = new Vector2(-3.744f, -3.971f);
+    }
+
+    IEnumerator HammerPowerup()
+    {
+        // switch music
+        GameBehavior.Instance.Music.resource = GameBehavior.Instance.PowerupMusic;
+        GameBehavior.Instance.Music.Play();
+        yield return new WaitForSeconds(GameBehavior.Instance.PowerupDuration);
+        
+        // switch music back
+        GameBehavior.Instance.Music.resource = GameBehavior.Instance.LevelMusic;
+        GameBehavior.Instance.Music.Play();
+        
+        isHammer = false;
+        
+        hammerLeft.SetActive(false);
+        hammerRight.SetActive(false);
+    }
+    
+    IEnumerator Death()
+    {
+        Debug.Log("player death coroutine called");
+        
+        // spin sprite around for a second, wait a second, then sprite falls to signal death
+        _direction = 0.0f;
+        _verticalDirection = 0.0f;
+        _rb.linearVelocity = Vector2.zero;
+        _rb.gravityScale = 0.0f;
+
+        isAlive = false;
+        
+        _rb.excludeLayers = LayerMask.GetMask("Floor", "Barrel", "Fire Enemy", "Default", "Ladder", "Ladder Top");
+        
+        for (int i = 0; i < 8; i++)
+        {
+            _rb.rotation -= 45;
+            yield return new WaitForSeconds(0.125f);
+        }
+
+        yield return new WaitForSeconds(0.75f);
+        _rb.linearVelocityY = -1.5f;
+        yield return new WaitForSeconds(3.0f);
     }
 }

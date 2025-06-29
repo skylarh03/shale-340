@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class BarrelBehavior : MonoBehaviour
@@ -22,6 +23,9 @@ public class BarrelBehavior : MonoBehaviour
         barrelSpeedY = barrelSpeedX / 2;
 
         _directionX = 1.0f;
+        
+        // upon every new barrel spawn, add it to the GM barrel list to keep track of all active barrels
+        GameBehavior.Instance.ActiveBarrels.Add(gameObject);
     }
 
     // Update is called once per frame
@@ -32,20 +36,25 @@ public class BarrelBehavior : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!_goingDownLadder) _rb.linearVelocityX = _directionX * barrelSpeedX;
-        else
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
         {
-            _rb.linearVelocityX = 0;
-            _rb.linearVelocityY = -barrelSpeedY; // negative to make it go down
+            if (!_goingDownLadder) _rb.linearVelocityX = _directionX * barrelSpeedX;
+            else
+            {
+                _rb.linearVelocityX = 0;
+                _rb.linearVelocityY = -barrelSpeedY; // negative to make it go down
+            }
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Death)
+        {
+            StopAllCoroutines();
+            _rb.linearVelocity = Vector2.zero;
+            _rb.gravityScale = 0;
         }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            Destroy(gameObject);
-        }
         
         if (_goingDownLadder)
         {
@@ -64,8 +73,15 @@ public class BarrelBehavior : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         float num = Random.Range(0, 100);
-        
-        if (other.gameObject.CompareTag("Destroy Barrel")) Destroy(gameObject);
+
+        if (other.gameObject.CompareTag("Destroy Barrel") || other.gameObject.CompareTag("Hammer"))
+        {
+            GameBehavior.Instance.ActiveBarrels.Remove(gameObject);
+            Destroy(gameObject);
+            
+            // add to score only if it collides with hammer
+            if (other.gameObject.CompareTag("Hammer")) GameBehavior.Instance.ScorePoints();
+        }
         
         else if (other.gameObject.CompareTag("Barrel Descend") && num < ladderDescendChance) StartCoroutine(GoDownLadder());
     }

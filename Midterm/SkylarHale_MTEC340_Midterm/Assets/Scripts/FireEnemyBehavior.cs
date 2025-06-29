@@ -3,6 +3,8 @@ using System.Collections;
 
 public class FireEnemyBehavior : MonoBehaviour
 {
+    [SerializeField] private int _lifetime = 120;
+    
     [Header("Lines of Sight")]
     [SerializeField] private GameObject lineOfSightRight;
     [SerializeField] private GameObject lineOfSightLeft;
@@ -20,6 +22,7 @@ public class FireEnemyBehavior : MonoBehaviour
 
     [SerializeField] private bool isChasing = false;
     [SerializeField] private bool isClimbing = false;
+    [SerializeField] private bool isAlive = true;
     
     private Rigidbody2D _rb;
     
@@ -30,7 +33,11 @@ public class FireEnemyBehavior : MonoBehaviour
         _rb.linearDamping = 0;
         _rb.angularDamping = 0;
         _rb.gravityScale = 1;
+        
+        GameBehavior.Instance.ActiveFireEnemies.Add(gameObject);
+        
         StartCoroutine(IdleMove());
+        StartCoroutine(DecreaseLifetime());
     }
 
     void Update()
@@ -42,13 +49,23 @@ public class FireEnemyBehavior : MonoBehaviour
             isClimbing = false;
             _verticalDirection = 0.0f;
             StopAllCoroutines();
+            StartCoroutine(DecreaseLifetime()); // this one should always be running until enemy despawns
         }
     }
 
     void FixedUpdate()
     {
-        _rb.linearVelocityX = currentSpeed * _direction;
-        if (isClimbing) _rb.linearVelocityY = defaultSpeed * _verticalDirection;
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            _rb.linearVelocityX = currentSpeed * _direction;
+            if (isClimbing) _rb.linearVelocityY = defaultSpeed * _verticalDirection;
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Death)
+        {
+            StopAllCoroutines();
+            _rb.linearVelocity =  Vector2.zero;
+            _rb.gravityScale = 0;
+        }
     }
 
     // this only runs if the enemy is climbing down a ladder and reaches the bottom
@@ -59,6 +76,7 @@ public class FireEnemyBehavior : MonoBehaviour
             DisableClimbing();
             StopAllCoroutines();
             StartCoroutine(IdleMove());
+            StartCoroutine(DecreaseLifetime());
         }
     }
     
@@ -70,6 +88,13 @@ public class FireEnemyBehavior : MonoBehaviour
             doesSeePlayer = true;
             //_direction = 0.0f;
             currentSpeed = chaseSpeed;
+        }
+
+        if (other.gameObject.CompareTag("Hammer"))
+        {
+            GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
+            Destroy(gameObject);
+            GameBehavior.Instance.ScorePoints();
         }
     }
     
@@ -90,6 +115,7 @@ public class FireEnemyBehavior : MonoBehaviour
                 EnableClimbing();
                 StopAllCoroutines();
                 StartCoroutine(ClimbUp());
+                StartCoroutine(DecreaseLifetime());
             }
         }
 
@@ -100,6 +126,7 @@ public class FireEnemyBehavior : MonoBehaviour
                 EnableClimbing();
                 StopAllCoroutines();
                 StartCoroutine(ClimbDown());
+                StartCoroutine(DecreaseLifetime());
             }
         }
     }
@@ -111,6 +138,7 @@ public class FireEnemyBehavior : MonoBehaviour
             DisableClimbing();
             StopAllCoroutines();
             StartCoroutine(IdleMove());
+            StartCoroutine(DecreaseLifetime());
         }
 
         if (other.gameObject.CompareTag("Player"))
@@ -211,5 +239,23 @@ public class FireEnemyBehavior : MonoBehaviour
         yield return new WaitForSeconds(1 / defaultSpeed); // same as player climbing down. inverse function according to speed, so the faster they climb the sooner collision re-enables
         _rb.excludeLayers = LayerMask.GetMask("Barrel", "Fire Enemy");
         yield return new WaitUntil(() => !isClimbing);
+    }
+
+    IEnumerator DecreaseLifetime()
+    {
+        while (isAlive)
+        {
+            _lifetime--;
+            if (_lifetime <= 0)
+            {
+                isAlive = false;
+                GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
+                Destroy(gameObject);
+            }
+            else
+            {
+                yield return new WaitForSeconds(1f);
+            }
+        }
     }
 }
