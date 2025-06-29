@@ -6,4 +6,10 @@ public static class Utilities
     {
         Play, Pause, Death, GameOver, TitleScreen
     }
+
+    public static void PlaySound(AudioSource source, AudioClip clip)
+    {
+        source.clip = clip;
+        source.Play();
+    }
 }

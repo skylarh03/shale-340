@@ -26,6 +26,9 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private bool isHammer = false;
     [SerializeField] private GameObject hammerLeft;
     [SerializeField] private GameObject hammerRight;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioSource _audioSource;
 
     private bool isAlive = true;
     
@@ -38,6 +41,7 @@ public class PlayerBehavior : MonoBehaviour
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _audioSource = GetComponent<AudioSource>();
         
         // initialize rigidbody values
         _rb.linearDamping = 0.0f;
@@ -79,6 +83,9 @@ public class PlayerBehavior : MonoBehaviour
         if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
         {
             isJumping = true;
+            
+            // play jump sound, clip is in source in inspector right now
+            _audioSource.Play();
             
             // fun little bug happened:
             // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional

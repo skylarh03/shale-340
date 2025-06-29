@@ -35,8 +35,10 @@ public class GameBehavior : MonoBehaviour
 
     [Header("Audio")] 
     public AudioSource Music;
+    public AudioSource SFX;
     public AudioClip LevelMusic;
     public AudioClip PowerupMusic;
+    [SerializeField] private AudioClip _scoreSFX;
     
     // initializer: runs before start()
     void Awake()
@@ -64,6 +66,8 @@ public class GameBehavior : MonoBehaviour
         
         _fireSpawnerInst = Instantiate(_fireSpawnerPrefab);
         _fireSpawnerInst.SetActive(true);
+        
+        SFX = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -78,6 +82,9 @@ public class GameBehavior : MonoBehaviour
     public void ScorePoints(int points = 100)
     {
         _playerScore.Score += points;
+        
+        // play score audio
+        SFX.PlayOneShot(_scoreSFX);
     }
 
     public void LoseLife()
