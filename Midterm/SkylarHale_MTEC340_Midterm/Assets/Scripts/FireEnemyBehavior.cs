@@ -166,7 +166,7 @@ public class FireEnemyBehavior : MonoBehaviour
             if (Mathf.Abs(other.attachedRigidbody.position.x - _rb.position.x) < 1.0f &&
                 other.attachedRigidbody.position.y > _rb.position.y)
             {
-                Debug.Log("player jumped over fire enemy");
+                //Debug.Log("player jumped over fire enemy");
                 GameBehavior.Instance.ScorePoints();
                 StartCoroutine(ShowPointsScored());
             }

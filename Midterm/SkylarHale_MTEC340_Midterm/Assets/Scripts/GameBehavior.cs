@@ -22,20 +22,24 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private PlayerScore _playerScore;
 
     [Header("Prefabs and Objects to Manipulate")] 
+    [SerializeField] private List<GameObject> _defaultPrefabs;
     [SerializeField] private GameObject _barrelPrefab;
     [SerializeField] private GameObject _fireEnemyPrefab;
-    
     [SerializeField] private GameObject _barrelSpawnerPrefab;
     [SerializeField] private GameObject _fireSpawnerPrefab;
 
-    private GameObject _barrelSpawnerInst;
-    private GameObject _fireSpawnerInst;
-
-    [Header("Lists of Active Objects")] 
-    public List<GameObject> ActiveBarrels;
-    public List<GameObject> ActiveFireEnemies;
+    [Header("Active Spawners")]
+    [SerializeField] private List<GameObject> _activeBarrelSpawners =  new List<GameObject>();
+    [SerializeField] private List<GameObject> _activeFireSpawners =  new List<GameObject>();
+    
+    [HideInInspector] public List<GameObject> ActiveBarrels;
+    [HideInInspector] public List<GameObject> ActiveFireEnemies;
+    [Header("Level Environments")] 
+    public List<LevelEnvironment> LevelEnvironments;
+    [SerializeField] private LevelEnvironment _currentLevelEnv;
 
     [Header("Powerup Information")] 
+    [SerializeField] private GameObject _powerupPrefab;
     public float PowerupDuration = 10.0f;
 
     [Header("Audio")] 
@@ -75,17 +79,9 @@ public class GameBehavior : MonoBehaviour
     {
         CurrentState = Utilities.GameState.Play;
         
-        _barrelSpawnerInst = Instantiate(_barrelSpawnerPrefab);
-        _barrelSpawnerInst.SetActive(true);
-        
-        _fireSpawnerInst = Instantiate(_fireSpawnerPrefab);
-        _fireSpawnerInst.SetActive(true);
-        
         SFX = GetComponent<AudioSource>();
-        
-        // initialize UI attributes
-        _healthText.text = $"{_health}/{_maxHealth} HP";
-        _levelText.text = _currentLevel.ToString();
+
+        ResetGame();
     }
 
     void Update()
@@ -134,6 +130,7 @@ public class GameBehavior : MonoBehaviour
     public void ResetGame()
     {
         _health = 3;
+        _maxHealth = 3;
         _healthText.text = $"{_health}/{_maxHealth} HP";
         _playerScore.Score = 0;
         _playerIsAlive = true;
@@ -141,23 +138,39 @@ public class GameBehavior : MonoBehaviour
         _levelText.text = _currentLevel.ToString();
         
         // reset all prefab and object parameters to default values
-        _barrelPrefab.GetComponent<BarrelBehavior>().barrelSpeedX = 3.0f;
+        // default isntances of all prefabs are stored in GameBehavior as well
+        _barrelPrefab = _defaultPrefabs[0];
+        _fireEnemyPrefab  = _defaultPrefabs[1];
+        _barrelSpawnerPrefab = _defaultPrefabs[2];
+        _fireSpawnerPrefab = _defaultPrefabs[3];
         
-        _fireEnemyPrefab.GetComponent<FireEnemyBehavior>().defaultSpeed = 1.0f;
-        _fireEnemyPrefab.GetComponent<FireEnemyBehavior>().chaseSpeed = 1.75f;
-
-        _barrelSpawnerPrefab.GetComponent<BarrelSpawner>().minimumSpawnInterval = 3.0f;
-        _barrelSpawnerPrefab.GetComponent<BarrelSpawner>().maximumSpawnInterval = 8.0f;
-
-        _fireSpawnerPrefab.GetComponent<FireEnemySpawner>().minimumSpawnInterval = 25.0f;
-        _fireSpawnerPrefab.GetComponent<FireEnemySpawner>().maximumSpawnInterval = 40.0f;
+        // new instance of level 1 layout
+        _currentLevelEnv = Instantiate(LevelEnvironments[_currentLevel - 1]); // _currentLevel is always 1 here
         
-        // new instances of spawners
-        _barrelSpawnerInst = Instantiate(_barrelSpawnerPrefab);
-        _barrelSpawnerInst.SetActive(true);
+        // assign spawners and powerups to corresponding locations in the level prefab
+        // based off of the location gameobjects
         
-        _fireSpawnerInst = Instantiate(_fireSpawnerPrefab);
-        _fireSpawnerInst.SetActive(true);
+        // powerups
+        for (int i = 0; i < _currentLevelEnv.PowerupLocations.Count; i++)
+        {
+            Instantiate(_powerupPrefab, _currentLevelEnv.PowerupLocations[i].transform);
+        }
+        
+        // barrel spawner(s)
+        for (int i = 0; i < _currentLevelEnv.BarrelSpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_barrelSpawnerPrefab, _currentLevelEnv.BarrelSpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            _activeBarrelSpawners.Add(newSpawner);
+        }
+        
+        // fire enemy spawner(s)
+        for (int i = 0; i < _currentLevelEnv.FireEnemySpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_fireSpawnerPrefab, _currentLevelEnv.FireEnemySpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            _activeFireSpawners.Add(newSpawner);
+        }
 
         _player.ResetPlayer();
         
@@ -168,8 +181,7 @@ public class GameBehavior : MonoBehaviour
 
     IEnumerator PlayerDeathEvents()
     {
-        Destroy(_barrelSpawnerInst);
-        Destroy(_fireSpawnerInst);
+        DestroyAllSpawners();
         
         Utilities.PlaySound(Music, DeathMusic);
         
@@ -178,6 +190,7 @@ public class GameBehavior : MonoBehaviour
         DestroyAllActiveObjects();
         CurrentState = Utilities.GameState.GameOver;
         SceneManager.LoadScene("Scenes/GameOver", LoadSceneMode.Additive);
+        Destroy(_currentLevelEnv.gameObject);
     }
 
     IEnumerator PlayerWinLevel()
@@ -193,12 +206,18 @@ public class GameBehavior : MonoBehaviour
     void DestroyAllActiveObjects()
     {
         // destroy all active obstacles and spawner instances, empty lists, then reset the game
-        ActiveBarrels.ForEach(x => Destroy(x));
+        ActiveBarrels.ForEach(Destroy);
         ActiveBarrels.RemoveAll(x=>x);
-        Destroy(_barrelSpawnerInst);
 
-        ActiveFireEnemies.ForEach(x => Destroy(x));
+        ActiveFireEnemies.ForEach(Destroy);
         ActiveFireEnemies.RemoveAll(x=>x);
-        Destroy(_fireSpawnerInst);
+    }
+
+    void DestroyAllSpawners()
+    {
+        _activeBarrelSpawners.ForEach(Destroy);
+        _activeBarrelSpawners.RemoveAll(x=>x);
+        _activeFireSpawners.ForEach(Destroy);
+        _activeFireSpawners.RemoveAll(x=>x);
     }
 }

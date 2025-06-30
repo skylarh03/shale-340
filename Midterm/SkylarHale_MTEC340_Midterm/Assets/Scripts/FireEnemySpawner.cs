@@ -36,7 +36,7 @@ public class FireEnemySpawner : MonoBehaviour
 
     IEnumerator SpawnFire()
     {
-        Instantiate(firePrefab).SetActive(true);
+        Instantiate(firePrefab, transform).SetActive(true);
         isWaiting = true;
         
         yield return new WaitForSeconds(Random.Range(minimumSpawnInterval, maximumSpawnInterval));
