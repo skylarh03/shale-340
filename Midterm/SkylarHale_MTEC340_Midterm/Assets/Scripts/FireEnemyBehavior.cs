@@ -39,7 +39,7 @@ public class FireEnemyBehavior : MonoBehaviour
         _rb.angularDamping = 0;
         _rb.gravityScale = 1;
         
-        GameBehavior.Instance.ActiveFireEnemies.Add(gameObject);
+        GameBehavior.Instance._activeFireEnemies.Add(gameObject);
         
         StartCoroutine(IdleMove());
         StartCoroutine(DecreaseLifetime());
@@ -62,6 +62,7 @@ public class FireEnemyBehavior : MonoBehaviour
             _direction = 0.0f;
             _verticalDirection = 0.0f;
             _rb.linearVelocity = Vector2.zero;
+            _rb.gravityScale = 0.0f;
             _pointsScored.SetActive(false);
         }
     }
@@ -266,7 +267,7 @@ public class FireEnemyBehavior : MonoBehaviour
             if (_lifetime <= 0)
             {
                 isAlive = false;
-                GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
+                GameBehavior.Instance._activeFireEnemies.Remove(gameObject);
                 Destroy(gameObject);
             }
             else
@@ -296,7 +297,7 @@ public class FireEnemyBehavior : MonoBehaviour
         StartCoroutine(ShowPointsScored());
         
         yield return new WaitForSeconds(0.6f);
-        GameBehavior.Instance.ActiveFireEnemies.Remove(gameObject);
+        GameBehavior.Instance._activeFireEnemies.Remove(gameObject);
         Destroy(gameObject);
     }
 }

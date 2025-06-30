@@ -32,7 +32,7 @@ public class BarrelBehavior : MonoBehaviour
         _directionX = 1.0f;
         
         // upon every new barrel spawn, add it to the GM barrel list to keep track of all active barrels
-        GameBehavior.Instance.ActiveBarrels.Add(gameObject);
+        GameBehavior.Instance._activeBarrels.Add(gameObject);
     }
 
     // Update is called once per frame
@@ -42,6 +42,7 @@ public class BarrelBehavior : MonoBehaviour
         {
             _directionX = 0.0f;
             _rb.linearVelocity = Vector2.zero;
+            _rb.gravityScale = 0.0f;
             _pointsScored.SetActive(false);
         }
     }
@@ -88,7 +89,7 @@ public class BarrelBehavior : MonoBehaviour
 
         if (other.gameObject.CompareTag("Destroy Barrel"))
         {
-            GameBehavior.Instance.ActiveBarrels.Remove(gameObject);
+            GameBehavior.Instance._activeBarrels.Remove(gameObject);
             Destroy(gameObject);
         }
         
@@ -143,7 +144,7 @@ public class BarrelBehavior : MonoBehaviour
         StartCoroutine(ShowPointsScored());
         
         yield return new WaitForSeconds(0.6f);
-        GameBehavior.Instance.ActiveBarrels.Remove(gameObject);
+        GameBehavior.Instance._activeBarrels.Remove(gameObject);
         Destroy(gameObject);
     }
 }

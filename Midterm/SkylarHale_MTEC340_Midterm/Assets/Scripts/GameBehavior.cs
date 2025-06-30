@@ -29,11 +29,11 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private GameObject _fireSpawnerPrefab;
 
     [Header("Active Spawners")]
-    [SerializeField] private List<GameObject> _activeBarrelSpawners =  new List<GameObject>();
+    [SerializeField] private List<GameObject> __activeBarrelspawners =  new List<GameObject>();
     [SerializeField] private List<GameObject> _activeFireSpawners =  new List<GameObject>();
     
-    [HideInInspector] public List<GameObject> ActiveBarrels;
-    [HideInInspector] public List<GameObject> ActiveFireEnemies;
+    [HideInInspector] public List<GameObject> _activeBarrels;
+    [HideInInspector] public List<GameObject> _activeFireEnemies;
     [Header("Level Environments")] 
     public List<LevelEnvironment> LevelEnvironments;
     [SerializeField] private LevelEnvironment _currentLevelEnv;
@@ -161,7 +161,7 @@ public class GameBehavior : MonoBehaviour
         {
             GameObject newSpawner = Instantiate(_barrelSpawnerPrefab, _currentLevelEnv.BarrelSpawnerLocations[i].transform);
             newSpawner.SetActive(true);
-            _activeBarrelSpawners.Add(newSpawner);
+            __activeBarrelspawners.Add(newSpawner);
         }
         
         // fire enemy spawner(s)
@@ -206,17 +206,17 @@ public class GameBehavior : MonoBehaviour
     void DestroyAllActiveObjects()
     {
         // destroy all active obstacles and spawner instances, empty lists, then reset the game
-        ActiveBarrels.ForEach(Destroy);
-        ActiveBarrels.RemoveAll(x=>x);
+        _activeBarrels.ForEach(Destroy);
+        _activeBarrels.RemoveAll(x=>x);
 
-        ActiveFireEnemies.ForEach(Destroy);
-        ActiveFireEnemies.RemoveAll(x=>x);
+        _activeFireEnemies.ForEach(Destroy);
+        _activeFireEnemies.RemoveAll(x=>x);
     }
 
     void DestroyAllSpawners()
     {
-        _activeBarrelSpawners.ForEach(Destroy);
-        _activeBarrelSpawners.RemoveAll(x=>x);
+        __activeBarrelspawners.ForEach(Destroy);
+        __activeBarrelspawners.RemoveAll(x=>x);
         _activeFireSpawners.ForEach(Destroy);
         _activeFireSpawners.RemoveAll(x=>x);
     }
