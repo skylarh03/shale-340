@@ -8,6 +8,7 @@ public class UINavigator : MonoBehaviour
 {
     [SerializeField] private List<TMP_Text> _options;
     [SerializeField] private int _currentOption = 1;
+    [SerializeField] private float _cursorMoveDistance = 0.83f;
 
     [SerializeField] private KeyCode _upDirection;
     [SerializeField] private KeyCode _downDirection;
@@ -61,9 +62,9 @@ public class UINavigator : MonoBehaviour
         _currentOption++;
         if (_currentOption > _options.Count) {
             _currentOption = 1; // wrap around menu
-            transform.Translate(Vector3.left * 1.66f);
+            transform.Translate(Vector3.left * (_cursorMoveDistance * (_options.Count - 1)));
         }
-        else transform.Translate(Vector3.right * 0.83f);
+        else transform.Translate(Vector3.right * _cursorMoveDistance);
         
         // visually select new current option by changing text color
         _options[_currentOption - 1].color = new Color(0.9960785f, 0.9019608f, 0.1058824f);
@@ -80,10 +81,10 @@ public class UINavigator : MonoBehaviour
         // the cursor is rotated -90 degrees on the z-axis, so use Vector3.right for moving down, and Vector3.left for moving up
         _currentOption--;
         if (_currentOption < 1) {
-            _currentOption = 3; // wrap around menu
-            transform.Translate(Vector3.right * 1.66f);
+            _currentOption = _options.Count; // wrap around menu
+            transform.Translate(Vector3.right * (_cursorMoveDistance * (_options.Count - 1)));
         }
-        else transform.Translate(Vector3.left * 0.83f);
+        else transform.Translate(Vector3.left * _cursorMoveDistance);
         
         // visually select new current option by changing text color
         _options[_currentOption - 1].color = new Color(0.9960785f, 0.9019608f, 0.1058824f);
@@ -102,10 +103,10 @@ public class UINavigator : MonoBehaviour
         switch (_currentOption)
         {
             case 1:
-                StartCoroutine(TryAgain());
+                StartCoroutine(PlayGame());
                 break;
             case 2:
-                Debug.Log("Load main menu (not made yet)");
+                //Debug.Log("Load main menu (not made yet)");
                 break;
             case 3:
                 Application.Quit();
@@ -135,7 +136,7 @@ public class UINavigator : MonoBehaviour
         }
     }
 
-    IEnumerator TryAgain()
+    IEnumerator PlayGame()
     {
         yield return new WaitForSeconds(0.83f);
         GameBehavior.Instance.ResetGame();
