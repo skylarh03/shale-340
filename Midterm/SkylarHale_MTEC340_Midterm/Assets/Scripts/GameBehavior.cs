@@ -101,7 +101,7 @@ public class GameBehavior : MonoBehaviour
         }
         
         // manage pausing
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && CurrentState is Utilities.GameState.Play or Utilities.GameState.Pause)
         {
             CurrentState = CurrentState == Utilities.GameState.Play 
                 ? Utilities.GameState.Pause 

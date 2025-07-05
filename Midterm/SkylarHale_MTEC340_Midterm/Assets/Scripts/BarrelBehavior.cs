@@ -36,34 +36,15 @@ public class BarrelBehavior : MonoBehaviour
         GameBehavior.Instance._activeBarrels.Add(gameObject);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play && !GameBehavior.Instance.IsPaused)
-        {
-            _previousDirectionX = _directionX;
-            _directionX = 0.0f;
-            _rb.linearVelocity = Vector2.zero;
-            _rb.gravityScale = 0.0f;
-            _pointsScored.SetActive(false);
-            GameBehavior.Instance.IsPaused = true;
-            Debug.Log("is paused");
-        }
-        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play && GameBehavior.Instance.IsPaused)
-        {
-            _directionX = _previousDirectionX;
-            //if (_goingDownLadder) _rb.linearVelocityY = -barrelSpeedY;
-            GameBehavior.Instance.IsPaused = false;
-            _rb.gravityScale = 1.0f;
-            Debug.Log(_directionX);
-        }
-    }
-
     void FixedUpdate()
     {
         if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
         {
-            if (!_goingDownLadder) _rb.linearVelocityX = _directionX * barrelSpeedX;
+            if (!_goingDownLadder)
+            {
+                if (!_hasBeenScored) _rb.gravityScale = 1; // fixedupdate still runs after barrel is destroyed by hammer, so this will keep score text in place
+                _rb.linearVelocityX = _directionX * barrelSpeedX;
+            }
             else
             {
                 _rb.linearVelocityX = 0;
@@ -73,6 +54,11 @@ public class BarrelBehavior : MonoBehaviour
         else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Death)
         {
             StopAllCoroutines();
+            _rb.linearVelocity = Vector2.zero;
+            _rb.gravityScale = 0;
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
+        {
             _rb.linearVelocity = Vector2.zero;
             _rb.gravityScale = 0;
         }
@@ -107,6 +93,7 @@ public class BarrelBehavior : MonoBehaviour
         
         if (other.gameObject.CompareTag("Hammer"))
         {
+            _hasBeenScored = true;
             GameBehavior.Instance.ScorePoints();
             StartCoroutine(ShowPointsScoredAfterHammer());
         }

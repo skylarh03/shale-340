@@ -5,32 +5,55 @@ public class BarrelSpawner : MonoBehaviour
 {
     public float minimumSpawnInterval = 5.0f;
     public float maximumSpawnInterval = 8.0f;
+    private float _timeToWait = 0.0f;
+    public float timeElapsedBeforePause = 0.0f;
     
     public GameObject barrelPrefab;
     
     private bool isWaiting = false;
 
+    void Start()
+    {
+        Instantiate(barrelPrefab, transform).SetActive(true);
+    }
+
     // Update is called once per frame
     void Update()
     {
-        if (!isWaiting)
-        {
-            StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval));
-        }
-
         if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
         {
             StopAllCoroutines();
-            isWaiting = true; // set to true because if this happens, the gameobject will be destroyed shortly
+            // only set to permanently waiting if not paused (death, win level)
+            isWaiting = GameBehavior.Instance.CurrentState != Utilities.GameState.Pause;
+        }
+        else
+        {
+            if (!isWaiting)
+            {
+                StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval, timeElapsedBeforePause));
+            }
         }
     }
 
-    IEnumerator SpawnBarrel(float minWait, float maxWait)
+    IEnumerator SpawnBarrel(float minWait, float maxWait, float pauseTimeDifference = 0.0f)
     {
         isWaiting = true;
-        Instantiate(barrelPrefab, transform).SetActive(true);
+        //Debug.Log(pauseTimeDifference);
+
+        // only update time to wait if there isn't already a non-zero value stored
+        // this way we don't override old wait times by pausing
+        if (_timeToWait == 0.0f) _timeToWait = Random.Range(minWait, maxWait) - pauseTimeDifference;
+
+        while (timeElapsedBeforePause < _timeToWait)
+        {
+            timeElapsedBeforePause += 0.1f;
+            yield return new WaitForSeconds(0.1f);
+        }
         
-        yield return new WaitForSeconds(Random.Range(minWait, maxWait));
+        // this only happens if the coroutine doesn't get stopped
         isWaiting = false;
+        Instantiate(barrelPrefab, transform).SetActive(true);
+        timeElapsedBeforePause = 0.0f;
+        _timeToWait = 0.0f; // reset to generate new value upon next call
     }
 }
