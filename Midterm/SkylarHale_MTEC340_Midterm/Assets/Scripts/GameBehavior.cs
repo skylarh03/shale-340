@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(AudioSource))]
 public class GameBehavior : MonoBehaviour
 {
     public static GameBehavior Instance;
@@ -17,6 +18,7 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private int _health = 3;
     [SerializeField] private int _maxHealth = 3;
     public bool HasWonLevel = false;
+    public bool IsPaused = false;
 
     [SerializeField] private bool _playerIsAlive = true;
     [SerializeField] private PlayerScore _playerScore;
@@ -77,11 +79,10 @@ public class GameBehavior : MonoBehaviour
 
     void Start()
     {
-        CurrentState = Utilities.GameState.Play;
+        CurrentState = Utilities.GameState.TitleScreen;
+        SceneManager.LoadScene("TitleScreen", LoadSceneMode.Additive);
         
         SFX = GetComponent<AudioSource>();
-
-        ResetGame();
     }
 
     void Update()
@@ -95,6 +96,14 @@ public class GameBehavior : MonoBehaviour
         {
             HasWonLevel = true;
             StartCoroutine(PlayerWinLevel());
+        }
+        
+        // manage pausing
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            CurrentState = CurrentState == Utilities.GameState.Play 
+                ? Utilities.GameState.Pause 
+                : Utilities.GameState.Play;
         }
     }
 
@@ -177,6 +186,8 @@ public class GameBehavior : MonoBehaviour
         Utilities.PlaySound(Music, LevelMusic, loop: true);
         
         CurrentState = Utilities.GameState.Play;
+        
+        SceneManager.UnloadSceneAsync("TitleScreen");
     }
 
     IEnumerator PlayerDeathEvents()

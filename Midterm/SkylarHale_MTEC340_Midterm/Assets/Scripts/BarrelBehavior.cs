@@ -10,6 +10,7 @@ public class BarrelBehavior : MonoBehaviour
     public float ladderDescendChance = 50.0f; // percent chance of going down a ladder
     
     private float _directionX = 1.0f;
+    private float _previousDirectionX;
 
     [SerializeField] private bool _goingDownLadder = false;
 
@@ -38,12 +39,23 @@ public class BarrelBehavior : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
+        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play && !GameBehavior.Instance.IsPaused)
         {
+            _previousDirectionX = _directionX;
             _directionX = 0.0f;
             _rb.linearVelocity = Vector2.zero;
             _rb.gravityScale = 0.0f;
             _pointsScored.SetActive(false);
+            GameBehavior.Instance.IsPaused = true;
+            Debug.Log("is paused");
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play && GameBehavior.Instance.IsPaused)
+        {
+            _directionX = _previousDirectionX;
+            //if (_goingDownLadder) _rb.linearVelocityY = -barrelSpeedY;
+            GameBehavior.Instance.IsPaused = false;
+            _rb.gravityScale = 1.0f;
+            Debug.Log(_directionX);
         }
     }
 

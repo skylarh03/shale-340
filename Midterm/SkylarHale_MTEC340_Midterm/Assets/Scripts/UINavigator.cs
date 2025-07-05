@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -95,22 +96,40 @@ public class UINavigator : MonoBehaviour
     void SelectOption()
     {
         Utilities.PlaySound(_audioSource, _uiSelectClip);
-        
-        // option-dependent actions
-        // 1 - go back to game
-        // 2 - go to main menu
-        // 3 - quit game
-        switch (_currentOption)
+        if (_options.Count == 2)
         {
-            case 1:
-                StartCoroutine(PlayGame());
-                break;
-            case 2:
-                //Debug.Log("Load main menu (not made yet)");
-                break;
-            case 3:
-                Application.Quit();
-                break;
+            // option-dependent actions
+            // 1 - go back to game
+            // 2 - quit game
+            switch (_currentOption)
+            {
+                case 1:
+                    StartCoroutine(PlayGame());
+                    break;
+                case 2:
+                    StartCoroutine(QuitGame());
+                    break;
+            }
+        }
+        else if (_options.Count == 3)
+        {
+            // option-dependent actions
+            // 1 - go back to game
+            // 2 - go to main menu
+            // 3 - quit game
+            switch (_currentOption)
+            {
+                case 1:
+                    StartCoroutine(RestartGame());
+                    break;
+                case 2:
+                    SceneManager.UnloadSceneAsync("Scenes/GameOver");
+                    SceneManager.LoadScene("Scenes/TitleScreen",  LoadSceneMode.Additive);
+                    break;
+                case 3:
+                    StartCoroutine(QuitGame());
+                    break;
+            }
         }
     }
 
@@ -140,6 +159,19 @@ public class UINavigator : MonoBehaviour
     {
         yield return new WaitForSeconds(0.83f);
         GameBehavior.Instance.ResetGame();
+    }
+
+    IEnumerator RestartGame()
+    {
+        yield return new WaitForSeconds(0.83f);
         SceneManager.UnloadSceneAsync("Scenes/GameOver");
+        GameBehavior.Instance.ResetGame();
+    }
+
+    IEnumerator QuitGame()
+    {
+        yield return new WaitForSeconds(0.83f);
+        EditorApplication.isPlaying = false;
+        Application.Quit();
     }
 }
