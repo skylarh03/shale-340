@@ -123,8 +123,7 @@ public class UINavigator : MonoBehaviour
                     StartCoroutine(RestartGame());
                     break;
                 case 2:
-                    SceneManager.UnloadSceneAsync("Scenes/GameOver");
-                    SceneManager.LoadScene("Scenes/TitleScreen",  LoadSceneMode.Additive);
+                    StartCoroutine(GoToMainMenu());
                     break;
                 case 3:
                     StartCoroutine(QuitGame());
@@ -173,5 +172,12 @@ public class UINavigator : MonoBehaviour
         yield return new WaitForSeconds(0.83f);
         EditorApplication.isPlaying = false;
         Application.Quit();
+    }
+
+    IEnumerator GoToMainMenu()
+    {
+        yield return new WaitForSeconds(0.83f);
+        SceneManager.UnloadSceneAsync("Scenes/GameOver");
+        SceneManager.LoadScene("Scenes/TitleScreen",  LoadSceneMode.Additive);
     }
 }

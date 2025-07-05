@@ -57,6 +57,7 @@ public class GameBehavior : MonoBehaviour
 
     [Header("UI")]
     // score text is already handled, this is just for HP and level
+    [SerializeField] private GameObject _levelUICanvas;
     [SerializeField] private TMP_Text _healthText;
     [SerializeField] private TMP_Text _levelText;
     
@@ -81,6 +82,7 @@ public class GameBehavior : MonoBehaviour
     {
         CurrentState = Utilities.GameState.TitleScreen;
         SceneManager.LoadScene("TitleScreen", LoadSceneMode.Additive);
+        _levelUICanvas.SetActive(false);
         
         SFX = GetComponent<AudioSource>();
     }
@@ -188,6 +190,8 @@ public class GameBehavior : MonoBehaviour
         CurrentState = Utilities.GameState.Play;
         
         SceneManager.UnloadSceneAsync("TitleScreen");
+        
+        _levelUICanvas.SetActive(true);
     }
 
     IEnumerator PlayerDeathEvents()
@@ -202,6 +206,8 @@ public class GameBehavior : MonoBehaviour
         CurrentState = Utilities.GameState.GameOver;
         SceneManager.LoadScene("Scenes/GameOver", LoadSceneMode.Additive);
         Destroy(_currentLevelEnv.gameObject);
+        
+        _levelUICanvas.SetActive(false);
     }
 
     IEnumerator PlayerWinLevel()

@@ -77,40 +77,40 @@ public class PlayerBehavior : MonoBehaviour
             // only allow vertical input if NOT using hammer
             if (Input.GetKey(upDirection) && !isHammer) _verticalDirection += 1f;
             if (Input.GetKey(downDirection) && !isHammer) _verticalDirection -= 1f;
-        }
-        
-        // jump logic
-        // jump has an initial force, slows down to reach a peak, then falls due to gravity
-        // can only happen while grounded and not climbing
-        // if you jump, disable platform collision so you can jump through
-        // however, this has to be re-enabled upon falling
-        if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
-        {
-            isJumping = true;
             
-            // play jump sound, clip is in source in inspector right now
-            _audioSource.Play();
-            
-            // fun little bug happened:
-            // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional
-            // vertical velocity, thereby meaning you jumped higher.
-            // this is an attempt at capping the initial velocity no matter what happens
-            if (Mathf.Approximately(_rb.linearVelocity.y, 0.0f))
+            // jump logic
+            // jump has an initial force, slows down to reach a peak, then falls due to gravity
+            // can only happen while grounded and not climbing
+            // if you jump, disable platform collision so you can jump through
+            // however, this has to be re-enabled upon falling
+            if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
             {
-                //Debug.Log("Jumped off of flat ground.");
-                _rb.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
-            }
-            else
-            {
-                // if you're already accelerating vertically, add the difference between the intended jump velocity
-                // and your current vertical velocity
-                //Debug.Log("Jumped off of sloped collision.");
-                _rb.AddForce(Vector3.up * (jumpForce - _rb.linearVelocityY), ForceMode2D.Impulse);
-            }
-            //Debug.Log(_rb.linearVelocityY);
+                isJumping = true;
             
-            _rb.excludeLayers = LayerMask.GetMask("Floor");
-            isGrounded = false;
+                // play jump sound, clip is in source in inspector right now
+                _audioSource.Play();
+            
+                // fun little bug happened:
+                // if you moved along a sloped collision to climb to the next platform and jumped, you would gain additional
+                // vertical velocity, thereby meaning you jumped higher.
+                // this is an attempt at capping the initial velocity no matter what happens
+                if (Mathf.Approximately(_rb.linearVelocity.y, 0.0f))
+                {
+                    //Debug.Log("Jumped off of flat ground.");
+                    _rb.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
+                }
+                else
+                {
+                    // if you're already accelerating vertically, add the difference between the intended jump velocity
+                    // and your current vertical velocity
+                    //Debug.Log("Jumped off of sloped collision.");
+                    _rb.AddForce(Vector3.up * (jumpForce - _rb.linearVelocityY), ForceMode2D.Impulse);
+                }
+                //Debug.Log(_rb.linearVelocityY);
+            
+                _rb.excludeLayers = LayerMask.GetMask("Floor");
+                isGrounded = false;
+            }
         }
         
         // hammer powerup
@@ -210,7 +210,7 @@ public class PlayerBehavior : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         // for some reason this runs ALSO when updating layer overrides in death coroutine?
-        // just run this if the player is alive as well i guess
+        // just run this if the player is alive as well I guess
         if (other.gameObject.CompareTag("Ladder") && isAlive)
         {
             isClimbing = false;
