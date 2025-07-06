@@ -1,0 +1,301 @@
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+[RequireComponent(typeof(AudioSource))]
+public class GameBehavior : MonoBehaviour
+{
+    public static GameBehavior Instance;
+    
+    [SerializeField] private int _currentLevel = 1;
+    public Utilities.GameState CurrentState;
+
+    [Header("Player Properties")]
+    [SerializeField] private PlayerBehavior _player;
+    [SerializeField] private int _health = 3;
+    [SerializeField] private int _maxHealth = 3;
+    public bool HasWonLevel = false;
+
+    [SerializeField] private bool _playerIsAlive = true;
+    [SerializeField] private PlayerScore _playerScore;
+
+    [Header("Prefabs and Objects to Manipulate")] 
+    [SerializeField] private List<GameObject> _defaultPrefabs;
+    [SerializeField] private GameObject _barrelPrefab;
+    [SerializeField] private GameObject _fireEnemyPrefab;
+    [SerializeField] private GameObject _barrelSpawnerPrefab;
+    [SerializeField] private GameObject _fireSpawnerPrefab;
+
+    [Header("Active Spawners")]
+    [SerializeField] private List<GameObject> __activeBarrelspawners =  new List<GameObject>();
+    [SerializeField] private List<GameObject> _activeFireSpawners =  new List<GameObject>();
+    
+    [HideInInspector] public List<GameObject> _activeBarrels;
+    [HideInInspector] public List<GameObject> _activeFireEnemies;
+    [Header("Level Environments")] 
+    public List<LevelEnvironment> LevelEnvironments;
+    [SerializeField] private LevelEnvironment _currentLevelEnv;
+
+    [Header("Powerup Information")] 
+    [SerializeField] private GameObject _powerupPrefab;
+    public float PowerupDuration = 10.0f;
+
+    [Header("Audio")] 
+    public AudioSource Music;
+    public AudioSource SFX;
+    public AudioClip TitleMusic;
+    public AudioClip LevelMusic;
+    public AudioClip PowerupMusic;
+    public AudioClip DeathMusic;
+    public AudioClip WinLevelMusic;
+    public AudioClip VictoryMusic;
+    public AudioClip UpgradeMusic;
+    [SerializeField] private AudioClip _scoreSFX;
+    [SerializeField] private AudioClip _playerHurtSFX;
+    [SerializeField] private AudioClip _pauseSFX;
+    [SerializeField] private AudioClip _selectSFX;
+    
+    [Header("Cutscene Objects")]
+    [SerializeField] private SpriteRenderer _whiteTransitionScreen;
+
+    [Header("UI")]
+    // score text is already handled, this is just for HP and level
+    [SerializeField] private GameObject _levelUICanvas;
+    [SerializeField] private TMP_Text _healthText;
+    [SerializeField] private TMP_Text _levelText;
+    
+    // initializer: runs before start()
+    void Awake()
+    {
+        // singleton pattern initializer
+        if (Instance != null && Instance != this)
+            Destroy(this);
+        else
+        {
+            // assign Game Manager (GM) if none exists
+            Instance = this;
+            
+            // make sure object owning the GM isn't destroyed when
+            // exiting the scene
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+
+    void Start()
+    {
+        Utilities.PlaySound(Music, TitleMusic, loop: true);
+        
+        CurrentState = Utilities.GameState.TitleScreen;
+        SceneManager.LoadScene("TitleScreen", LoadSceneMode.Additive);
+        _levelUICanvas.SetActive(false);
+        
+        SFX = GetComponent<AudioSource>();
+    }
+
+    void Update()
+    {
+        if (CurrentState == Utilities.GameState.Death && _playerIsAlive)
+        {
+            _playerIsAlive = false;
+            StartCoroutine(PlayerDeathEvents()); // waits for player death animation to play, then resets game
+        }
+        else if (CurrentState == Utilities.GameState.WinLevel && !HasWonLevel)
+        {
+            HasWonLevel = true;
+            StartCoroutine(PlayerWinLevel());
+        }
+        
+        // manage pausing
+        if (Input.GetKeyDown(KeyCode.Escape) && CurrentState is Utilities.GameState.Play or Utilities.GameState.Pause)
+        {
+            // manage pause menu
+            if (CurrentState == Utilities.GameState.Play)
+            {
+                SceneManager.LoadScene("PauseMenu", LoadSceneMode.Additive);
+                Utilities.PlaySound(SFX, _pauseSFX);
+                Music.volume = 0.5f;
+            }
+            else
+            {
+                SceneManager.UnloadSceneAsync("PauseMenu");
+                Utilities.PlaySound(SFX, _selectSFX);
+                Music.volume = 1.0f;
+            }
+            
+            CurrentState = CurrentState == Utilities.GameState.Play 
+                ? Utilities.GameState.Pause 
+                : Utilities.GameState.Play;
+        }
+    }
+
+    public void ScorePoints(int points = 100)
+    {
+        _playerScore.Score += points;
+        
+        // play score audio
+        SFX.PlayOneShot(_scoreSFX);
+    }
+
+    public void LoseHealth()
+    {
+        _health--;
+        _healthText.text = $"{_health}/{_maxHealth} HP";
+        if (_health == 0)
+        {
+            CurrentState = Utilities.GameState.Death;
+        }
+        else
+        {
+            // since there's already a separate sound playing for death, play a damage sound otherwise
+            Utilities.PlaySound(SFX, _playerHurtSFX);
+        }
+    }
+
+    public void NextLevel()
+    {
+        _currentLevel++;
+        _levelText.text = _currentLevel.ToString();
+    }
+    
+    public void ResetGame()
+    {
+        _health = 3;
+        _maxHealth = 3;
+        _healthText.text = $"{_health}/{_maxHealth} HP";
+        _playerScore.Score = 0;
+        _playerIsAlive = true;
+        _currentLevel = 1;
+        _levelText.text = _currentLevel.ToString();
+        
+        // reset all prefab and object parameters to default values
+        // default isntances of all prefabs are stored in GameBehavior as well
+        _barrelPrefab = _defaultPrefabs[0];
+        _fireEnemyPrefab  = _defaultPrefabs[1];
+        _barrelSpawnerPrefab = _defaultPrefabs[2];
+        _fireSpawnerPrefab = _defaultPrefabs[3];
+        
+        // new instance of level 1 layout
+        _currentLevelEnv = Instantiate(LevelEnvironments[_currentLevel - 1]); // _currentLevel is always 1 here
+        
+        // assign spawners and powerups to corresponding locations in the level prefab
+        // based off of the location gameobjects
+        
+        // powerups
+        for (int i = 0; i < _currentLevelEnv.PowerupLocations.Count; i++)
+        {
+            Instantiate(_powerupPrefab, _currentLevelEnv.PowerupLocations[i].transform);
+        }
+        
+        // barrel spawner(s)
+        for (int i = 0; i < _currentLevelEnv.BarrelSpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_barrelSpawnerPrefab, _currentLevelEnv.BarrelSpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            __activeBarrelspawners.Add(newSpawner);
+        }
+        
+        // fire enemy spawner(s)
+        for (int i = 0; i < _currentLevelEnv.FireEnemySpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_fireSpawnerPrefab, _currentLevelEnv.FireEnemySpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            _activeFireSpawners.Add(newSpawner);
+        }
+
+        _player.ResetPlayer();
+        
+        Utilities.PlaySound(Music, LevelMusic, loop: true);
+        
+        CurrentState = Utilities.GameState.Play;
+        
+        _levelUICanvas.SetActive(true);
+        
+        SceneManager.UnloadSceneAsync("TitleScreen");
+    }
+
+    IEnumerator PlayerDeathEvents()
+    {
+        DestroyAllSpawners();
+        
+        Utilities.PlaySound(Music, DeathMusic);
+        
+        yield return new WaitForSeconds(3.65f);
+        
+        DestroyAllActiveObjects();
+        CurrentState = Utilities.GameState.GameOver;
+        SceneManager.LoadScene("Scenes/GameOver", LoadSceneMode.Additive);
+        Destroy(_currentLevelEnv.gameObject);
+        
+        _levelUICanvas.SetActive(false);
+    }
+
+    IEnumerator PlayerWinLevel()
+    {
+        Utilities.PlaySound(Music, WinLevelMusic);
+        yield return new WaitForSeconds(2.0f);
+        
+        DestroyAllActiveObjects();
+        Utilities.PlaySound(Music, VictoryMusic, loop: true);
+        CurrentState =  Utilities.GameState.Play;
+    }
+
+    IEnumerator FadeToWhite()
+    {
+        float timer = 0.0f;
+
+        // fade screen to white over a period of time
+        // also fade out music, and play swell sfx to go with it (need to design this)
+        while (timer < 2.5f)
+        {
+            timer += 0.01f;
+            _whiteTransitionScreen.color += new Color(0, 0, 0, 0.004f);
+            Music.volume -= 0.004f;
+            yield return new WaitForSeconds(0.01f);
+        }
+        
+        Music.Stop();
+        
+        yield return new WaitForSeconds(1.5f);
+        Destroy(_currentLevelEnv.gameObject);
+        Utilities.PlaySound(Music, UpgradeMusic, loop: true);
+        Music.volume = 1.0f;
+        _player.gameObject.SetActive(false);
+
+        SceneManager.LoadScene("UpgradeScreen", LoadSceneMode.Additive);
+        
+        timer = 0.0f;
+        // fade out white to show upgrade screen
+        while (timer < 1.0f)
+        {
+            timer += 0.01f;
+            _whiteTransitionScreen.color -= new Color(0, 0, 0, 0.01f);
+            yield return new WaitForSeconds(0.01f);
+        }
+    }
+
+    void DestroyAllActiveObjects()
+    {
+        // destroy all active obstacles and spawner instances, empty lists, then reset the game
+        _activeBarrels.ForEach(Destroy);
+        _activeBarrels.RemoveAll(x=>x);
+
+        _activeFireEnemies.ForEach(Destroy);
+        _activeFireEnemies.RemoveAll(x=>x);
+    }
+
+    void DestroyAllSpawners()
+    {
+        __activeBarrelspawners.ForEach(Destroy);
+        __activeBarrelspawners.RemoveAll(x=>x);
+        _activeFireSpawners.ForEach(Destroy);
+        _activeFireSpawners.RemoveAll(x=>x);
+    }
+
+    public void TransitionToPointsShop()
+    {
+        StartCoroutine(FadeToWhite());
+    }
+}
