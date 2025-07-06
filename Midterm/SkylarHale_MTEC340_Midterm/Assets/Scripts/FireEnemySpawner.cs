@@ -5,26 +5,35 @@ using Random = UnityEngine.Random;
 
 public class FireEnemySpawner : MonoBehaviour
 {
-    private bool isWaiting = true;
+    [SerializeField] private bool isWaiting = false;
     
     [SerializeField] private GameObject firePrefab;
 
     public float minimumSpawnInterval;
     public float maximumSpawnInterval;
+    private float _timeToWait = 0.0f;
+    private float _timeElapsedBeforePause = 0.0f;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        StartCoroutine(InitialWait());
+        //StartCoroutine(InitialWait());
     }
 
     void Update()
     {
-        if (!isWaiting) StartCoroutine(SpawnFire());
         if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
         {
             StopAllCoroutines();
-            isWaiting = true; // set to true because if this happens, the gameobject will be destroyed shortly
+            // only set to permanently waiting if not paused (death, win level)
+            isWaiting = GameBehavior.Instance.CurrentState != Utilities.GameState.Pause;
+        }
+        else
+        {
+            if (!isWaiting)
+            {
+                StartCoroutine(SpawnFire(minimumSpawnInterval, maximumSpawnInterval, _timeElapsedBeforePause));
+            }
         }
     }
 
@@ -34,12 +43,23 @@ public class FireEnemySpawner : MonoBehaviour
         isWaiting = false;
     }
 
-    IEnumerator SpawnFire()
+    IEnumerator SpawnFire(float minWait, float maxWait, float pauseTimeDifference = 0.0f)
     {
-        Instantiate(firePrefab, transform).SetActive(true);
         isWaiting = true;
+
+        // only update time to wait if there isn't already a non-zero value stored
+        // this way we don't override old wait times by pausing
+        if (_timeToWait == 0.0f) _timeToWait = Random.Range(minWait, maxWait) - pauseTimeDifference;
+
+        while (_timeElapsedBeforePause < _timeToWait)
+        {
+            _timeElapsedBeforePause += 0.1f;
+            yield return new WaitForSeconds(0.1f);
+        }
         
-        yield return new WaitForSeconds(Random.Range(minimumSpawnInterval, maximumSpawnInterval));
+        Instantiate(firePrefab, transform).SetActive(true);
         isWaiting = false;
+        _timeElapsedBeforePause = 0.0f;
+        _timeToWait = 0.0f;
     }
 }

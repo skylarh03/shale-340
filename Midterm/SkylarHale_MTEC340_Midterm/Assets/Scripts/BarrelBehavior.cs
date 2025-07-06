@@ -10,7 +10,9 @@ public class BarrelBehavior : MonoBehaviour
     public float ladderDescendChance = 50.0f; // percent chance of going down a ladder
     
     private float _directionX = 1.0f;
-    private float _previousDirectionX;
+
+    private Vector2 _previousVelocity;
+    private bool isPaused = false;
 
     [SerializeField] private bool _goingDownLadder = false;
 
@@ -36,6 +38,37 @@ public class BarrelBehavior : MonoBehaviour
         GameBehavior.Instance._activeBarrels.Add(gameObject);
     }
 
+    void Update()
+    {
+        // check state
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
+        {
+            if (!isPaused)
+            {
+                isPaused = true; // set flag
+                
+                // store velocity for use when returning to play state
+                _previousVelocity = _rb.linearVelocity;
+                _rb.linearVelocity = Vector2.zero;
+                _rb.gravityScale = 0;
+            }
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            if (isPaused)
+            {
+                isPaused = false; // set flag
+                _rb.linearVelocity = _previousVelocity;
+                _rb.gravityScale = _goingDownLadder ? 0 : 1;
+            }
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.WinLevel)
+        {
+            _rb.linearVelocity = Vector2.zero;
+            _rb.gravityScale = 0;
+        }
+    }
+
     void FixedUpdate()
     {
         if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
@@ -57,15 +90,11 @@ public class BarrelBehavior : MonoBehaviour
             _rb.linearVelocity = Vector2.zero;
             _rb.gravityScale = 0;
         }
-        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
-        {
-            _rb.linearVelocity = Vector2.zero;
-            _rb.gravityScale = 0;
-        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (collision.gameObject.CompareTag("Player")) Destroy(gameObject);
         
         if (_goingDownLadder)
         {
@@ -112,7 +141,7 @@ public class BarrelBehavior : MonoBehaviour
     private IEnumerator GoDownLadder()
     {
         _goingDownLadder = true;
-        _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Height Cap"); // ignores ladder height cap in case it goes down a ladder the player is on
+        _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Height Cap", "Barrel"); // ignores ladder height cap in case it goes down a ladder the player is on
         
         // the faster the barrel speed is, the shorter time it takes to re-enable collision
         // the slower the barrel speed is, the longer time it takes to re-enable collision

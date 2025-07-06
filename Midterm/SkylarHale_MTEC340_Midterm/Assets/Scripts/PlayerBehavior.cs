@@ -27,6 +27,8 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private bool isHammer = false;
     [SerializeField] private GameObject hammerLeft;
     [SerializeField] private GameObject hammerRight;
+    private float hammerRemainingTime;
+    private bool isPaused;
     
     [Header("Audio")]
     [SerializeField] private AudioSource _audioSource;
@@ -50,6 +52,8 @@ public class PlayerBehavior : MonoBehaviour
         _rb.gravityScale = gravity;
         
         _initialPosition = _rb.position;
+
+        hammerRemainingTime = GameBehavior.Instance.PowerupDuration;
     }
 
     void FixedUpdate()
@@ -129,6 +133,32 @@ public class PlayerBehavior : MonoBehaviour
                 hammerRight.SetActive(true);
             }
         }
+        
+        // manage hammer powerup interacting with pausing
+        // if paused, stop the coroutine timer
+        // if unpaused, resume it
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
+        {
+            if (!isPaused)
+            {
+                isPaused = true;
+
+                if (isHammer)
+                {
+                    StopAllCoroutines();
+                    Debug.Log("pausing while hammer is active");
+                }
+            }
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            if (isPaused)
+            {
+                isPaused = false;
+
+                if (isHammer) StartCoroutine(HammerPowerup());
+            }
+        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -188,6 +218,14 @@ public class PlayerBehavior : MonoBehaviour
             isHammer = true;
             StartCoroutine(HammerPowerup());
         }
+        
+        // win level
+        if (other.gameObject.CompareTag("Next Level Trigger"))
+        {
+            GameBehavior.Instance.CurrentState = Utilities.GameState.Cutscene;
+            _rb.gravityScale = 0;
+            GameBehavior.Instance.TransitionToPointsShop();
+        }
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -239,15 +277,26 @@ public class PlayerBehavior : MonoBehaviour
     }
 
     IEnumerator HammerPowerup()
-    {
+    { 
         // switch music
-        GameBehavior.Instance.Music.resource = GameBehavior.Instance.PowerupMusic;
-        GameBehavior.Instance.Music.Play();
-        yield return new WaitForSeconds(GameBehavior.Instance.PowerupDuration);
+        if (GameBehavior.Instance.Music.resource != GameBehavior.Instance.PowerupMusic)
+        {
+            GameBehavior.Instance.Music.resource = GameBehavior.Instance.PowerupMusic;
+            GameBehavior.Instance.Music.Play();
+        }
+
+        while (hammerRemainingTime > 0.0f)
+        {
+            hammerRemainingTime -= 0.1f;
+            yield return new  WaitForSeconds(0.1f);
+        }
         
         // switch music back
         GameBehavior.Instance.Music.resource = GameBehavior.Instance.LevelMusic;
         GameBehavior.Instance.Music.Play();
+        
+        // reset timer
+        hammerRemainingTime = GameBehavior.Instance.PowerupDuration;
         
         isHammer = false;
         
@@ -257,6 +306,8 @@ public class PlayerBehavior : MonoBehaviour
     
     IEnumerator Death()
     {
+        StopCoroutine(HammerPowerup());
+        
         //Debug.Log("player death coroutine called");
         
         // syncing animation to sound, will have a lot of very specific WaitForSeconds() times

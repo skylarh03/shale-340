@@ -6,7 +6,7 @@ public class BarrelSpawner : MonoBehaviour
     public float minimumSpawnInterval = 5.0f;
     public float maximumSpawnInterval = 8.0f;
     private float _timeToWait = 0.0f;
-    public float timeElapsedBeforePause = 0.0f;
+    private float _timeElapsedBeforePause = 0.0f;
     
     public GameObject barrelPrefab;
     
@@ -30,7 +30,7 @@ public class BarrelSpawner : MonoBehaviour
         {
             if (!isWaiting)
             {
-                StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval, timeElapsedBeforePause));
+                StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval, _timeElapsedBeforePause));
             }
         }
     }
@@ -44,16 +44,16 @@ public class BarrelSpawner : MonoBehaviour
         // this way we don't override old wait times by pausing
         if (_timeToWait == 0.0f) _timeToWait = Random.Range(minWait, maxWait) - pauseTimeDifference;
 
-        while (timeElapsedBeforePause < _timeToWait)
+        while (_timeElapsedBeforePause < _timeToWait)
         {
-            timeElapsedBeforePause += 0.1f;
+            _timeElapsedBeforePause += 0.1f;
             yield return new WaitForSeconds(0.1f);
         }
         
         // this only happens if the coroutine doesn't get stopped
         isWaiting = false;
         Instantiate(barrelPrefab, transform).SetActive(true);
-        timeElapsedBeforePause = 0.0f;
+        _timeElapsedBeforePause = 0.0f;
         _timeToWait = 0.0f; // reset to generate new value upon next call
     }
 }

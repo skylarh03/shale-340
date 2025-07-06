@@ -14,15 +14,15 @@ public class PowerupBehavior : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (GameBehavior.Instance.CurrentState != Utilities.GameState.Play)
-        {
-            _sr.enabled = false;
-            _col.enabled = false;
-        }
-        else
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play || GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
         {
             _sr.enabled = true;
             _col.enabled = true;
+        }
+        else
+        {
+            _sr.enabled = false;
+            _col.enabled = false;
         }
     }
 }

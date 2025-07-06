@@ -177,6 +177,7 @@ public class UINavigator : MonoBehaviour
     IEnumerator GoToMainMenu()
     {
         yield return new WaitForSeconds(0.83f);
+        Utilities.PlaySound(GameBehavior.Instance.Music, GameBehavior.Instance.TitleMusic, loop: true);
         SceneManager.UnloadSceneAsync("Scenes/GameOver");
         SceneManager.LoadScene("Scenes/TitleScreen",  LoadSceneMode.Additive);
     }

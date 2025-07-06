@@ -18,7 +18,6 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private int _health = 3;
     [SerializeField] private int _maxHealth = 3;
     public bool HasWonLevel = false;
-    public bool IsPaused = false;
 
     [SerializeField] private bool _playerIsAlive = true;
     [SerializeField] private PlayerScore _playerScore;
@@ -47,6 +46,7 @@ public class GameBehavior : MonoBehaviour
     [Header("Audio")] 
     public AudioSource Music;
     public AudioSource SFX;
+    public AudioClip TitleMusic;
     public AudioClip LevelMusic;
     public AudioClip PowerupMusic;
     public AudioClip DeathMusic;
@@ -54,6 +54,11 @@ public class GameBehavior : MonoBehaviour
     public AudioClip VictoryMusic;
     [SerializeField] private AudioClip _scoreSFX;
     [SerializeField] private AudioClip _playerHurtSFX;
+    [SerializeField] private AudioClip _pauseSFX;
+    [SerializeField] private AudioClip _selectSFX;
+    
+    [Header("Cutscene Objects")]
+    [SerializeField] private SpriteRenderer _whiteTransitionScreen;
 
     [Header("UI")]
     // score text is already handled, this is just for HP and level
@@ -80,6 +85,8 @@ public class GameBehavior : MonoBehaviour
 
     void Start()
     {
+        Utilities.PlaySound(Music, TitleMusic, loop: true);
+        
         CurrentState = Utilities.GameState.TitleScreen;
         SceneManager.LoadScene("TitleScreen", LoadSceneMode.Additive);
         _levelUICanvas.SetActive(false);
@@ -103,6 +110,20 @@ public class GameBehavior : MonoBehaviour
         // manage pausing
         if (Input.GetKeyDown(KeyCode.Escape) && CurrentState is Utilities.GameState.Play or Utilities.GameState.Pause)
         {
+            // manage pause menu
+            if (CurrentState == Utilities.GameState.Play)
+            {
+                SceneManager.LoadScene("PauseMenu", LoadSceneMode.Additive);
+                Utilities.PlaySound(SFX, _pauseSFX);
+                Music.volume = 0.5f;
+            }
+            else
+            {
+                SceneManager.UnloadSceneAsync("PauseMenu");
+                Utilities.PlaySound(SFX, _selectSFX);
+                Music.volume = 1.0f;
+            }
+            
             CurrentState = CurrentState == Utilities.GameState.Play 
                 ? Utilities.GameState.Pause 
                 : Utilities.GameState.Play;
@@ -189,9 +210,9 @@ public class GameBehavior : MonoBehaviour
         
         CurrentState = Utilities.GameState.Play;
         
-        SceneManager.UnloadSceneAsync("TitleScreen");
-        
         _levelUICanvas.SetActive(true);
+        
+        SceneManager.UnloadSceneAsync("TitleScreen");
     }
 
     IEnumerator PlayerDeathEvents()
@@ -220,6 +241,29 @@ public class GameBehavior : MonoBehaviour
         CurrentState =  Utilities.GameState.Play;
     }
 
+    IEnumerator FadeToWhite()
+    {
+        float timer = 0.0f;
+
+        // fade screen to white over a period of time
+        // also fade out music, and play swell sfx to go with it (need to design this)
+        while (timer < 2.5f)
+        {
+            timer += 0.01f;
+            _whiteTransitionScreen.color += new Color(0, 0, 0, 0.004f);
+            Music.volume -= 0.004f;
+            yield return new WaitForSeconds(0.01f);
+        }
+        
+        Music.Stop();
+        
+        yield return new WaitForSeconds(1.5f);
+        Destroy(_currentLevelEnv.gameObject);
+        Music.volume = 1.0f;
+
+        SceneManager.LoadScene("PointsShop", LoadSceneMode.Additive);
+    }
+
     void DestroyAllActiveObjects()
     {
         // destroy all active obstacles and spawner instances, empty lists, then reset the game
@@ -236,5 +280,10 @@ public class GameBehavior : MonoBehaviour
         __activeBarrelspawners.RemoveAll(x=>x);
         _activeFireSpawners.ForEach(Destroy);
         _activeFireSpawners.RemoveAll(x=>x);
+    }
+
+    public void TransitionToPointsShop()
+    {
+        StartCoroutine(FadeToWhite());
     }
 }

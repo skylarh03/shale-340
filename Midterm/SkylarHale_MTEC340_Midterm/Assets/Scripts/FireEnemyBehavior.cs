@@ -17,6 +17,10 @@ public class FireEnemyBehavior : MonoBehaviour
 
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
+
+    private Vector2 _previousVelocity;
+    private bool isPaused;
+    private bool hasBeenScored;
     
     [Header("Conditionals")]
     [SerializeField] private bool doesSeePlayer = false;
@@ -65,6 +69,29 @@ public class FireEnemyBehavior : MonoBehaviour
             _rb.gravityScale = 0.0f;
             _pointsScored.SetActive(false);
         }
+        
+        // check state for pausing
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
+        {
+            if (!isPaused)
+            {
+                isPaused = true; // set flag
+                
+                // store velocity for use when returning to play state
+                _previousVelocity = _rb.linearVelocity;
+                _rb.linearVelocity = Vector2.zero;
+                _rb.gravityScale = 0;
+            }
+        }
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        {
+            if (isPaused)
+            {
+                isPaused = false; // set flag
+                _rb.linearVelocity = _previousVelocity;
+                _rb.gravityScale = isClimbing ? 0 : 1;
+            }
+        }
     }
 
     void FixedUpdate()
@@ -72,7 +99,16 @@ public class FireEnemyBehavior : MonoBehaviour
         if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
         {
             _rb.linearVelocityX = currentSpeed * _direction;
-            if (isClimbing) _rb.linearVelocityY = defaultSpeed * _verticalDirection;
+            if (isClimbing)
+            {
+                _rb.linearVelocityY = defaultSpeed * _verticalDirection;
+                _rb.gravityScale = 0;
+            }
+
+            if (hasBeenScored)
+            {
+                _rb.linearVelocity = Vector2.zero;
+            }
         }
         else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Death)
         {
@@ -109,6 +145,7 @@ public class FireEnemyBehavior : MonoBehaviour
 
         if (other.gameObject.CompareTag("Hammer"))
         {
+            hasBeenScored = true;
             GameBehavior.Instance.ScorePoints();
             StartCoroutine(ShowPointsScoredAfterHammer());
         }
