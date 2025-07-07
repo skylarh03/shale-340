@@ -9,7 +9,7 @@ public class LadderSpawner : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GameObject newLadder = Instantiate(_ladderPrefab);
+        GameObject newLadder = Instantiate(_ladderPrefab, transform);
         newLadder.SetActive(true);
     }
 
@@ -28,7 +28,7 @@ public class LadderSpawner : MonoBehaviour
         
         yield return new WaitForSeconds(0.52f);
         
-        GameObject newLadder = Instantiate(_ladderPrefab);
+        GameObject newLadder = Instantiate(_ladderPrefab, transform);
         newLadder.SetActive(true);
         isWaiting = false;
     }

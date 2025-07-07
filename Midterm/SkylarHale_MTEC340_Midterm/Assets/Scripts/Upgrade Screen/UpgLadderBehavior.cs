@@ -13,6 +13,9 @@ public class UpgLadderBehavior : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Upgrade Screen Destroy Ladder")) Destroy(gameObject);
+        if (other.gameObject.CompareTag("Upgrade Screen Destroy Ladder"))
+        {
+            Destroy(gameObject);
+        }
     }
 }

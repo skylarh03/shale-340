@@ -262,7 +262,6 @@ public class GameBehavior : MonoBehaviour
         Destroy(_currentLevelEnv.gameObject);
         Utilities.PlaySound(Music, UpgradeMusic, loop: true);
         Music.volume = 1.0f;
-        _player.gameObject.SetActive(false);
 
         SceneManager.LoadScene("UpgradeScreen", LoadSceneMode.Additive);
         
@@ -297,5 +296,33 @@ public class GameBehavior : MonoBehaviour
     public void TransitionToPointsShop()
     {
         StartCoroutine(FadeToWhite());
+    }
+    
+    // methods for applying upgrades are below
+
+    // increase movement speed by 20% of initial value (1.5)
+    public void ApplyDashPepper()
+    {
+        _player.horizontalSpeed += 0.3f;
+        _player.climbSpeed += 0.3f;
+    }
+
+    public void ApplySuperMushroom()
+    {
+        _maxHealth += 1;
+        _health += 1;
+        _healthText.text = $"{_health}/{_maxHealth} HP";
+    }
+    
+    // increase jump force by 0.75
+    public void ApplyGoombaShoe()
+    {
+        _player.jumpForce += 0.75f;
+    }
+    
+    // increase duration of hammer powerup
+    public void ApplySuperHammer()
+    {
+        PowerupDuration += 2.0f;
     }
 }

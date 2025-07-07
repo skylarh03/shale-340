@@ -13,9 +13,9 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private KeyCode jumpButton;
     
     [Header("Movement")]
-    [SerializeField] private float horizontalSpeed = 5.0f;
-    [SerializeField] private float climbSpeed = 5.0f;
-    [SerializeField] private float jumpForce;
+    public float horizontalSpeed = 5.0f;
+    public float climbSpeed = 5.0f;
+    public float jumpForce;
     [SerializeField] private float gravity = 1.0f;
     private Vector2 _initialPosition;
     
