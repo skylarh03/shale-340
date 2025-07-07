@@ -39,9 +39,19 @@ public class GameBehavior : MonoBehaviour
     public List<LevelEnvironment> LevelEnvironments;
     [SerializeField] private LevelEnvironment _currentLevelEnv;
 
+    [Header("Pickup Prefabs")]
+    public GameObject BonusPointPickup;
+    public GameObject BonusHealthPickup;
+    
     [Header("Powerup Information")] 
-    [SerializeField] private GameObject _powerupPrefab;
-    public float PowerupDuration = 10.0f;
+    public List<Utilities.Powerups> UnlockedPowerups = new List<Utilities.Powerups>()
+    {
+        Utilities.Powerups.SuperHammer
+    };
+    public GameObject HammerPrefab;
+    public float HammerDuration = 10.0f;
+    public float BoomerangDuration = 10.0f;
+    public float IceDuration = 10.0f;
 
     [Header("Audio")] 
     public AudioSource Music;
@@ -136,7 +146,21 @@ public class GameBehavior : MonoBehaviour
         _playerScore.Score += points;
         
         // play score audio
-        SFX.PlayOneShot(_scoreSFX);
+        Utilities.PlaySound(SFX, _scoreSFX);
+    }
+
+    // increase health by 1 if not max hp
+    // otherwise, add to score by 100
+    public void HealthPickup()
+    {
+        if (_health < _maxHealth)
+        {
+            _health++;
+            _healthText.text = $"{_health}/{_maxHealth} HP";
+        }
+        else _playerScore.Score += 100;
+        
+        // some sound effect here
     }
 
     public void LoseHealth()
@@ -162,11 +186,17 @@ public class GameBehavior : MonoBehaviour
     
     public void ResetGame()
     {
+        // reset all values to defaults
         _health = 3;
         _maxHealth = 3;
         _healthText.text = $"{_health}/{_maxHealth} HP";
+        
         _playerScore.Score = 0;
+        _player.horizontalSpeed = 1.5f;
+        _player.climbSpeed = 1.5f;
+        _player.jumpForce = 5.25f;
         _playerIsAlive = true;
+        
         _currentLevel = 1;
         _levelText.text = _currentLevel.ToString();
         
@@ -177,17 +207,15 @@ public class GameBehavior : MonoBehaviour
         _barrelSpawnerPrefab = _defaultPrefabs[2];
         _fireSpawnerPrefab = _defaultPrefabs[3];
         
+        // reset unlocked powerups
+        UnlockedPowerups.Clear();
+        UnlockedPowerups.Add(Utilities.Powerups.SuperHammer);
+        
         // new instance of level 1 layout
-        _currentLevelEnv = Instantiate(LevelEnvironments[_currentLevel - 1]); // _currentLevel is always 1 here
+        _currentLevelEnv = Instantiate(LevelEnvironments[0]);
         
         // assign spawners and powerups to corresponding locations in the level prefab
         // based off of the location gameobjects
-        
-        // powerups
-        for (int i = 0; i < _currentLevelEnv.PowerupLocations.Count; i++)
-        {
-            Instantiate(_powerupPrefab, _currentLevelEnv.PowerupLocations[i].transform);
-        }
         
         // barrel spawner(s)
         for (int i = 0; i < _currentLevelEnv.BarrelSpawnerLocations.Count; i++)
@@ -205,7 +233,7 @@ public class GameBehavior : MonoBehaviour
             _activeFireSpawners.Add(newSpawner);
         }
 
-        _player.ResetPlayer();
+        _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
         
         Utilities.PlaySound(Music, LevelMusic, loop: true);
         
@@ -323,6 +351,30 @@ public class GameBehavior : MonoBehaviour
     // increase duration of hammer powerup
     public void ApplySuperHammer()
     {
-        PowerupDuration += 2.0f;
+        HammerDuration += 2.0f;
+    }
+    
+    // has two possible actions:
+    // if boomerang flower is not unlocked, unlock it
+    // if it is unlocked, increase the powerup duration
+    public void ApplyBoomerangFlower()
+    {
+        if (!UnlockedPowerups.Contains(Utilities.Powerups.BoomerangFlower))
+        {
+            UnlockedPowerups.Add(Utilities.Powerups.BoomerangFlower);
+            Utilities.UpgradeDescriptions[6] = "Increases duration of Boomerang Flower";
+        }
+        else BoomerangDuration += 2.0f;
+    }
+    
+    // same as above but applied to ice flower
+    public void ApplyIceFlower()
+    {
+        if (!UnlockedPowerups.Contains(Utilities.Powerups.IceFlower))
+        {
+            UnlockedPowerups.Add(Utilities.Powerups.IceFlower);
+            Utilities.UpgradeDescriptions[7] = "Increases duration of Ice Flower";
+        }
+        else IceDuration += 2.0f;
     }
 }

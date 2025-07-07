@@ -185,6 +185,12 @@ public class UpgradeScreenManager : MonoBehaviour
             case 5:
                 GameBehavior.Instance.ApplySuperHammer();
                 break;
+            case 6:
+                GameBehavior.Instance.ApplyBoomerangFlower();
+                break;
+            case 7:
+                GameBehavior.Instance.ApplyIceFlower();
+                break;
         }
         
         Utilities.PlaySound(_audioSource, _uiSelectClip);

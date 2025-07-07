@@ -17,7 +17,6 @@ public class PlayerBehavior : MonoBehaviour
     public float climbSpeed = 5.0f;
     public float jumpForce;
     [SerializeField] private float gravity = 1.0f;
-    private Vector2 _initialPosition;
     
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
@@ -50,10 +49,8 @@ public class PlayerBehavior : MonoBehaviour
         _rb.linearDamping = 0.0f;
         _rb.angularDamping = 0.0f;
         _rb.gravityScale = gravity;
-        
-        _initialPosition = _rb.position;
 
-        hammerRemainingTime = GameBehavior.Instance.PowerupDuration;
+        hammerRemainingTime = GameBehavior.Instance.HammerDuration;
     }
 
     void FixedUpdate()
@@ -211,10 +208,16 @@ public class PlayerBehavior : MonoBehaviour
             }
         }
         
+        // bonus point collection
+        if (other.gameObject.CompareTag("Bonus Point Pickup")) GameBehavior.Instance.ScorePoints(300);
+        
+        // health pickup collection
+        if (other.gameObject.CompareTag("Health Pickup")) GameBehavior.Instance.HealthPickup();
+        
         // powerup activation
         if (other.gameObject.CompareTag("Powerup"))
         {
-            other.gameObject.SetActive(false);
+            //other.gameObject.SetActive(false);
             isHammer = true;
             StartCoroutine(HammerPowerup());
         }
@@ -267,13 +270,13 @@ public class PlayerBehavior : MonoBehaviour
         _rb.excludeLayers = LayerMask.GetMask("Floor");
     }
 
-    public void ResetPlayer()
+    public void ResetPlayer(Vector3 spawnLocation)
     {
         isAlive = true;
         _rb.excludeLayers = new LayerMask();
         _rb.gravityScale = gravity;
         _rb.linearVelocity = Vector2.zero;
-        _rb.position = _initialPosition;
+        _rb.position = spawnLocation;
     }
 
     IEnumerator HammerPowerup()
@@ -296,7 +299,7 @@ public class PlayerBehavior : MonoBehaviour
         GameBehavior.Instance.Music.Play();
         
         // reset timer
-        hammerRemainingTime = GameBehavior.Instance.PowerupDuration;
+        hammerRemainingTime = GameBehavior.Instance.HammerDuration;
         
         isHammer = false;
         

@@ -8,6 +8,11 @@ public static class Utilities
         Play, Pause, WinLevel, UpgradeScreen, Death, GameOver, TitleScreen, Cutscene
     }
 
+    public enum Powerups
+    {
+        SuperHammer, BoomerangFlower, IceFlower
+    }
+    
     public enum Upgrades
     {
         BlueShell, DashPepper, SuperMushroom, GoombasShoe, SuperLeaf, SuperHammer, BoomerangFlower, IceFlower
