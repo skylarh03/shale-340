@@ -261,6 +261,7 @@ public class UpgradeScreenManager : MonoBehaviour
         StartCoroutine(FadeToWhite());
         yield return new WaitForSeconds(4.0f);
         SceneManager.UnloadSceneAsync("UpgradeScreen");
+        GameBehavior.Instance.NextLevel();
     }
 
     // fade screen to white

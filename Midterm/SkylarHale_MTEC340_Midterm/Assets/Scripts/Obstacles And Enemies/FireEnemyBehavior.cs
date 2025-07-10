@@ -14,6 +14,9 @@ public class FireEnemyBehavior : MonoBehaviour
     public float defaultSpeed = 1.0f;
     public float chaseSpeed = 1.75f;
     private float currentSpeed;
+    
+    private float initialDefSpeed;
+    private float initialChaseSpeed;
 
     private float _direction = 0.0f;
     private float _verticalDirection = 0.0f;
@@ -47,6 +50,9 @@ public class FireEnemyBehavior : MonoBehaviour
         
         StartCoroutine(IdleMove());
         StartCoroutine(DecreaseLifetime());
+
+        initialDefSpeed = defaultSpeed;
+        initialChaseSpeed = chaseSpeed;
     }
 
     void Update()
@@ -228,6 +234,18 @@ public class FireEnemyBehavior : MonoBehaviour
         _rb.gravityScale = 1;
         _rb.excludeLayers = LayerMask.GetMask("Barrel", "Fire Enemy");
         _verticalDirection = 0;
+    }
+
+    public void IncreaseSpeed()
+    {
+        defaultSpeed += 0.5f;
+        chaseSpeed += 0.5f;
+    }
+
+    public void ResetSpeed()
+    {
+        defaultSpeed = 1f;
+        chaseSpeed = 1.75f;
     }
 
     IEnumerator IdleMove()

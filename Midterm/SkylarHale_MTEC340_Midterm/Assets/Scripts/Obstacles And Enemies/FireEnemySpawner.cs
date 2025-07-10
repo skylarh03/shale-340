@@ -14,10 +14,14 @@ public class FireEnemySpawner : MonoBehaviour
     private float _timeToWait = 0.0f;
     private float _timeElapsedBeforePause = 0.0f;
     
+    private float initialMinSpawnInterval;
+    private float initialMaxSpawnInterval;
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //StartCoroutine(InitialWait());
+        initialMinSpawnInterval = minimumSpawnInterval;
+        initialMaxSpawnInterval = maximumSpawnInterval;
     }
 
     void Update()
@@ -36,11 +40,17 @@ public class FireEnemySpawner : MonoBehaviour
             }
         }
     }
-
-    IEnumerator InitialWait()
+    
+    public void IncreaseSpawnFrequency()
     {
-        yield return new WaitForSeconds(Random.Range(3.0f, 6.0f));
-        isWaiting = false;
+        minimumSpawnInterval *= 0.9f;
+        maximumSpawnInterval *= 0.9f;
+    }
+
+    public void ResetSpawnFrequency()
+    {
+        minimumSpawnInterval = 15f;
+        maximumSpawnInterval = 30f;
     }
 
     IEnumerator SpawnFire(float minWait, float maxWait, float pauseTimeDifference = 0.0f)

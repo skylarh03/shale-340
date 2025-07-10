@@ -8,6 +8,9 @@ public class BarrelSpawner : MonoBehaviour
     private float _timeToWait = 0.0f;
     private float _timeElapsedBeforePause = 0.0f;
     
+    private float initialMinSpawnInterval;
+    private float initialMaxSpawnInterval;
+    
     public GameObject barrelPrefab;
     
     private bool isWaiting = false;
@@ -15,6 +18,9 @@ public class BarrelSpawner : MonoBehaviour
     void Start()
     {
         Instantiate(barrelPrefab, transform).SetActive(true);
+        
+        initialMinSpawnInterval = minimumSpawnInterval;
+        initialMaxSpawnInterval = maximumSpawnInterval;
     }
 
     // Update is called once per frame
@@ -33,6 +39,18 @@ public class BarrelSpawner : MonoBehaviour
                 StartCoroutine(SpawnBarrel(minimumSpawnInterval, maximumSpawnInterval, _timeElapsedBeforePause));
             }
         }
+    }
+
+    public void IncreaseSpawnFrequency()
+    {
+        minimumSpawnInterval *= 0.9f;
+        maximumSpawnInterval *= 0.9f;
+    }
+
+    public void ResetSpawnFrequency()
+    {
+        minimumSpawnInterval = 2f;
+        maximumSpawnInterval = 5f;
     }
 
     IEnumerator SpawnBarrel(float minWait, float maxWait, float pauseTimeDifference = 0.0f)

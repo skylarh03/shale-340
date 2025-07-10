@@ -29,6 +29,11 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private GameObject _barrelSpawnerPrefab;
     [SerializeField] private GameObject _fireSpawnerPrefab;
 
+    private BarrelBehavior _currentBarrelInfo;
+    private FireEnemyBehavior _currentFireInfo;
+    private BarrelSpawner _currentBarrelSpawnerInfo;
+    private FireEnemySpawner  _currentFireSpawnerInfo;
+
     [Header("Active Spawners")]
     [SerializeField] private List<GameObject> __activeBarrelspawners =  new List<GameObject>();
     [SerializeField] private List<GameObject> _activeFireSpawners =  new List<GameObject>();
@@ -103,6 +108,12 @@ public class GameBehavior : MonoBehaviour
         _levelUICanvas.SetActive(false);
         
         SFX = GetComponent<AudioSource>();
+        
+        _currentBarrelInfo = _barrelPrefab.GetComponent<BarrelBehavior>();
+        _currentFireInfo = _fireEnemyPrefab.GetComponent<FireEnemyBehavior>();
+        
+        _currentBarrelSpawnerInfo = _barrelSpawnerPrefab.GetComponent<BarrelSpawner>();
+        _currentFireSpawnerInfo = _fireSpawnerPrefab.GetComponent<FireEnemySpawner>();
     }
 
     void Update()
@@ -182,6 +193,39 @@ public class GameBehavior : MonoBehaviour
     {
         _currentLevel++;
         _levelText.text = _currentLevel.ToString();
+
+        HasWonLevel = false;
+        
+        _currentLevelEnv = Instantiate(LevelEnvironments[(_currentLevel - 1) % LevelEnvironments.Count]);
+        
+        // increase obstacle speed + spawner frequencies
+        _currentBarrelInfo.IncreaseSpeed();
+        _currentFireInfo.IncreaseSpeed();
+        _currentBarrelSpawnerInfo.IncreaseSpawnFrequency();
+        _currentFireSpawnerInfo.IncreaseSpawnFrequency();
+        
+        // assign spawners to corresponding locations in the level prefab
+        // based off of the location gameobjects
+        
+        // barrel spawner(s)
+        for (int i = 0; i < _currentLevelEnv.BarrelSpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_barrelSpawnerPrefab, _currentLevelEnv.BarrelSpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            __activeBarrelspawners.Add(newSpawner);
+        }
+        
+        // fire enemy spawner(s)
+        for (int i = 0; i < _currentLevelEnv.FireEnemySpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_fireSpawnerPrefab, _currentLevelEnv.FireEnemySpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            _activeFireSpawners.Add(newSpawner);
+        }
+        
+        _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
+
+        CurrentState = Utilities.GameState.Play;
     }
     
     public void ResetGame()
@@ -196,16 +240,17 @@ public class GameBehavior : MonoBehaviour
         _player.climbSpeed = 1.5f;
         _player.jumpForce = 5.25f;
         _playerIsAlive = true;
+        HasWonLevel = false;
         
         _currentLevel = 1;
         _levelText.text = _currentLevel.ToString();
         
         // reset all prefab and object parameters to default values
-        // default isntances of all prefabs are stored in GameBehavior as well
-        _barrelPrefab = _defaultPrefabs[0];
-        _fireEnemyPrefab  = _defaultPrefabs[1];
-        _barrelSpawnerPrefab = _defaultPrefabs[2];
-        _fireSpawnerPrefab = _defaultPrefabs[3];
+        // default instances of all prefabs are stored in GameBehavior as well
+        _currentBarrelInfo.ResetSpeed();
+        _currentFireInfo.ResetSpeed();
+        _currentBarrelSpawnerInfo.ResetSpawnFrequency();
+        _currentFireSpawnerInfo.ResetSpawnFrequency();
         
         // reset unlocked powerups
         UnlockedPowerups.Clear();
@@ -214,7 +259,7 @@ public class GameBehavior : MonoBehaviour
         // new instance of level 1 layout
         _currentLevelEnv = Instantiate(LevelEnvironments[0]);
         
-        // assign spawners and powerups to corresponding locations in the level prefab
+        // assign spawners to corresponding locations in the level prefab
         // based off of the location gameobjects
         
         // barrel spawner(s)

@@ -7,6 +7,8 @@ public class BarrelBehavior : MonoBehaviour
     public float barrelSpeedX; // for normal side-to-side movement
     public float barrelSpeedY; // for when the barrel happens to go down a ladder
 
+    private float initialSpeed;
+
     public float ladderDescendChance = 50.0f; // percent chance of going down a ladder
     
     private float _directionX = 1.0f;
@@ -30,6 +32,8 @@ public class BarrelBehavior : MonoBehaviour
         _sr = GetComponent<SpriteRenderer>();
         _circleCollider = GetComponent<CircleCollider2D>();
 
+        initialSpeed = barrelSpeedX;
+        
         barrelSpeedY = barrelSpeedX / 2;
 
         _directionX = 1.0f;
@@ -136,6 +140,18 @@ public class BarrelBehavior : MonoBehaviour
             GameBehavior.Instance.ScorePoints();
             StartCoroutine(ShowPointsScored());
         }
+    }
+
+    public void IncreaseSpeed()
+    {
+        barrelSpeedX += 0.5f;
+        barrelSpeedY = barrelSpeedX / 2;
+    }
+
+    public void ResetSpeed()
+    {
+        barrelSpeedX = 3f;
+        barrelSpeedY = barrelSpeedX / 2;
     }
 
     private IEnumerator GoDownLadder()
