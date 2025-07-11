@@ -10,7 +10,7 @@ public class GameBehavior : MonoBehaviour
 {
     public static GameBehavior Instance;
     
-    [SerializeField] private int _currentLevel = 1;
+    public int CurrentLevel = 1;
     public Utilities.GameState CurrentState;
 
     [Header("Player Properties")]
@@ -62,7 +62,7 @@ public class GameBehavior : MonoBehaviour
     public AudioSource Music;
     public AudioSource SFX;
     public AudioClip TitleMusic;
-    public AudioClip LevelMusic;
+    public List<AudioClip> LevelMusicLoops = new List<AudioClip>();
     public AudioClip PowerupMusic;
     public AudioClip DeathMusic;
     public AudioClip WinLevelMusic;
@@ -191,12 +191,15 @@ public class GameBehavior : MonoBehaviour
 
     public void NextLevel()
     {
-        _currentLevel++;
-        _levelText.text = _currentLevel.ToString();
+        CurrentLevel++;
+        _levelText.text = CurrentLevel.ToString();
+
+        // for some reason music volume doesn't always go back up to 1 upon going back, so this is just a safety net
+        Music.volume = 1.0f;
 
         HasWonLevel = false;
         
-        _currentLevelEnv = Instantiate(LevelEnvironments[(_currentLevel - 1) % LevelEnvironments.Count]);
+        _currentLevelEnv = Instantiate(LevelEnvironments[(CurrentLevel - 1) % LevelEnvironments.Count]);
         
         // increase obstacle speed + spawner frequencies
         _currentBarrelInfo.IncreaseSpeed();
@@ -224,6 +227,8 @@ public class GameBehavior : MonoBehaviour
         }
         
         _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
+        
+        Utilities.PlaySound(Music, LevelMusicLoops[(CurrentLevel - 1) % LevelEnvironments.Count], loop: true);
 
         CurrentState = Utilities.GameState.Play;
     }
@@ -241,9 +246,18 @@ public class GameBehavior : MonoBehaviour
         _player.jumpForce = 5.25f;
         _playerIsAlive = true;
         HasWonLevel = false;
+
+        _player.DashUnlocked = false;
+        _player.GlideUnlocked = false;
         
-        _currentLevel = 1;
-        _levelText.text = _currentLevel.ToString();
+        CurrentLevel = 1;
+        _levelText.text = CurrentLevel.ToString();
+        
+        // reset any changed upgrade descriptions
+        Utilities.UpgradeDescriptions[4] =
+            "Allows Mario to glide after jumping (press Space mid-jump) for some amount of time"; // super leaf
+        // Utilities.UpgradeDescriptions[6] = "Unlocks Boomerang Flower";
+        // Utilities.UpgradeDescriptions[7] = "Unlocks Ice Flower";
         
         // reset all prefab and object parameters to default values
         // default instances of all prefabs are stored in GameBehavior as well
@@ -280,7 +294,7 @@ public class GameBehavior : MonoBehaviour
 
         _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
         
-        Utilities.PlaySound(Music, LevelMusic, loop: true);
+        Utilities.PlaySound(Music, LevelMusicLoops[(CurrentLevel - 1) % LevelEnvironments.Count], loop: true);
         
         CurrentState = Utilities.GameState.Play;
         
@@ -372,6 +386,19 @@ public class GameBehavior : MonoBehaviour
     }
     
     // methods for applying upgrades are below
+    
+    // has two actions
+    // if player hasn't unlocked blue shell, unlock it and enable dashing
+    // if it's already unlocked, increase dash speed
+    public void ApplyBlueShell()
+    {
+        if (!_player.DashUnlocked)
+        {
+            _player.DashUnlocked = true;
+            Utilities.UpgradeDescriptions[0] = "Increases dash duration";
+        }
+        else _player.DashSpeedAdd += 0.3f;
+    }
 
     // increase movement speed by 20% of initial value (1.5)
     public void ApplyDashPepper()
@@ -390,7 +417,23 @@ public class GameBehavior : MonoBehaviour
     // increase jump force by 0.75
     public void ApplyGoombaShoe()
     {
-        _player.jumpForce += 0.75f;
+        _player.jumpForce += 0.3f;
+    }
+    
+    // has two actions
+    // if player hasn't unlocked super leaf, unlock it and enable player gliding
+    // if it's already unlocked, then increase glide duration
+    public void ApplySuperLeaf()
+    {
+        if (!_player.GlideUnlocked)
+        {
+            _player.GlideUnlocked = true;
+            Utilities.UpgradeDescriptions[4] = "Increases glide duration";
+        }
+        else
+        {
+            _player.GlideDuration += 0.2f;
+        }
     }
     
     // increase duration of hammer powerup

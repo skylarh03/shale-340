@@ -226,6 +226,10 @@ public class FireEnemyBehavior : MonoBehaviour
         _rb.gravityScale = 0;
         _rb.excludeLayers = LayerMask.GetMask("Floor", "Barrel", "Fire Enemy");
         _direction = 0;
+
+        // disable sight triggers if climbing
+        lineOfSightLeft.SetActive(false);
+        lineOfSightRight.SetActive(false);
     }
 
     void DisableClimbing()
@@ -234,12 +238,14 @@ public class FireEnemyBehavior : MonoBehaviour
         _rb.gravityScale = 1;
         _rb.excludeLayers = LayerMask.GetMask("Barrel", "Fire Enemy");
         _verticalDirection = 0;
+        
+        // sight triggers will be re-enabled after climbing based off of how it works already
     }
 
     public void IncreaseSpeed()
     {
-        defaultSpeed += 0.5f;
-        chaseSpeed += 0.5f;
+        defaultSpeed += 0.2f;
+        chaseSpeed += 0.2f;
     }
 
     public void ResetSpeed()

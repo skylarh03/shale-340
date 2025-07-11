@@ -144,7 +144,7 @@ public class BarrelBehavior : MonoBehaviour
 
     public void IncreaseSpeed()
     {
-        barrelSpeedX += 0.5f;
+        barrelSpeedX += 0.2f;
         barrelSpeedY = barrelSpeedX / 2;
     }
 

@@ -173,6 +173,9 @@ public class UpgradeScreenManager : MonoBehaviour
         // remaining cases: 0 - blue shell (dash), 4 - super leaf (glide), 6 - boomerang flower, 7 - ice flower
         switch ((int)_selectedUpgrade)
         {
+            case 0:
+                GameBehavior.Instance.ApplyBlueShell();
+                break;
             case 1:
                 GameBehavior.Instance.ApplyDashPepper();
                 break;
@@ -181,6 +184,9 @@ public class UpgradeScreenManager : MonoBehaviour
                 break;
             case 3:
                 GameBehavior.Instance.ApplyGoombaShoe();
+                break;
+            case 4:
+                GameBehavior.Instance.ApplySuperLeaf();
                 break;
             case 5:
                 GameBehavior.Instance.ApplySuperHammer();
@@ -277,7 +283,7 @@ public class UpgradeScreenManager : MonoBehaviour
         }
 
         GameBehavior.Instance.Music.Stop();
-        yield return new WaitForSeconds(1.0f);
         GameBehavior.Instance.Music.volume = 1.0f;
+        yield return new WaitForSeconds(1.0f);
     }
 }

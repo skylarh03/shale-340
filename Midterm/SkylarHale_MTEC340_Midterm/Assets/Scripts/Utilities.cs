@@ -15,7 +15,8 @@ public static class Utilities
     
     public enum Upgrades
     {
-        BlueShell, DashPepper, SuperMushroom, GoombasShoe, SuperLeaf, SuperHammer, BoomerangFlower, IceFlower
+        BlueShell, DashPepper, SuperMushroom, GoombasShoe, SuperLeaf, SuperHammer, 
+        // BoomerangFlower, IceFlower
     }
 
     public static List<string> UpgradeNames = new List<string>()
@@ -25,21 +26,21 @@ public static class Utilities
         "Super Mushroom",
         "Goomba's Shoe",
         "Super Leaf",
-        "Super Hammer",
-        "Boomerang Flower",
-        "Ice Flower",
+        "Super Hammer"
+        //"Boomerang Flower",
+        //"Ice Flower",
     };
     
     public static List<string> UpgradeDescriptions =  new List<string>()
     {
-        "Allows Mario to dash (Shift)", 
+        "Allows Mario to dash (press Right Shift)", 
         "Increases Mario's base speed", 
         "Increases Mario's Max HP by 1", 
         "Increases Mario's jump height", 
-        "Allows Mario to glide after jumping (hold Space) for some amount of time",
+        "Allows Mario to glide after jumping (press Space mid-jump) for some amount of time",
         "Increases duration of Hammer",
-        "Unlocks Boomerang Flower",
-        "Unlocks Ice Flower"
+        // "Unlocks Boomerang Flower",
+        // "Unlocks Ice Flower"
     };
 
     public static void PlaySound(AudioSource source, AudioClip clip, bool loop = false)

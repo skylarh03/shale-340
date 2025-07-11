@@ -1654,6 +1654,7 @@ MonoBehaviour:
   upDirection: 119
   downDirection: 115
   jumpButton: 32
+  dashButton: 303
   horizontalSpeed: 1.5
   climbSpeed: 1.5
   jumpForce: 5.25
@@ -1661,6 +1662,12 @@ MonoBehaviour:
   isGrounded: 0
   isClimbing: 0
   isJumping: 0
+  DashUnlocked: 0
+  DashDuration: 0.5
+  DashSpeedAdd: 1.5
+  GlideUnlocked: 0
+  _canGlide: 0
+  GlideDuration: 0.5
   isHammer: 0
   hammerLeft: {fileID: 516641843}
   hammerRight: {fileID: 687568984}
@@ -1805,7 +1812,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475e8f83dbb9d1a4a8def54e7ab28c53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentLevel: 1
+  CurrentLevel: 1
   CurrentState: 0
   _player: {fileID: 1410340786}
   _health: 3
@@ -1840,7 +1847,9 @@ MonoBehaviour:
   Music: {fileID: 547399647}
   SFX: {fileID: 0}
   TitleMusic: {fileID: 8300000, guid: a5bf09706e5b2374998f2c15f49af9e1, type: 3}
-  LevelMusic: {fileID: 8300000, guid: d5056c0b05c4b0742b82173f521b1ea3, type: 3}
+  LevelMusicLoops:
+  - {fileID: 8300000, guid: d5056c0b05c4b0742b82173f521b1ea3, type: 3}
+  - {fileID: 8300000, guid: 0010ca56b82de644680b68eba6053a74, type: 3}
   PowerupMusic: {fileID: 8300000, guid: df89436ec52d9b64f855793152e6cbc3, type: 3}
   DeathMusic: {fileID: 8300000, guid: 6be474abb5b660748b8fc42df781b3ba, type: 3}
   WinLevelMusic: {fileID: 8300000, guid: 3bfe7539008711e45b242952850c4b72, type: 3}

@@ -11,6 +11,7 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private KeyCode upDirection;
     [SerializeField] private KeyCode downDirection;
     [SerializeField] private KeyCode jumpButton;
+    [SerializeField] private KeyCode dashButton;
     
     [Header("Movement")]
     public float horizontalSpeed = 5.0f;
@@ -21,6 +22,17 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
     [SerializeField] private bool isJumping = false;
+    
+    [Header("Unlocked Movement")]
+    public bool DashUnlocked = false;
+    private bool _isDashing;
+    public float DashDuration = 0.3f;
+    public float DashSpeedAdd = 1.5f;
+    
+    public bool GlideUnlocked = false;
+    [SerializeField] private bool _canGlide = false;
+    private bool _isGliding;
+    public float GlideDuration = 1.0f;
 
     [Header("Hammer Powerup")] 
     [SerializeField] private bool isHammer = false;
@@ -87,6 +99,9 @@ public class PlayerBehavior : MonoBehaviour
             if (Input.GetKeyDown(jumpButton) && isGrounded && !isClimbing)
             {
                 isJumping = true;
+                
+                // if glide is unlocked, allow player to glide
+                if (GlideUnlocked) _canGlide = true;
             
                 // play jump sound, clip is in source in inspector right now
                 _audioSource.Play();
@@ -109,8 +124,24 @@ public class PlayerBehavior : MonoBehaviour
                 }
                 //Debug.Log(_rb.linearVelocityY);
             
-                _rb.excludeLayers = LayerMask.GetMask("Floor");
+                _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Top");
                 isGrounded = false;
+            }
+            
+            // glide logic
+            // if you hit space while mid-jump, run the glide coroutine
+            else if (Input.GetKeyDown(jumpButton) && !_isGliding && _canGlide)
+            {
+                _isGliding = true;
+                StartCoroutine(Glide());
+            }
+            
+            // dash logic
+            // if you hit the dash button, run the dash coroutine
+            if (Input.GetKeyDown(dashButton) && !_isDashing && DashUnlocked)
+            {
+                _isDashing = true;
+                StartCoroutine(Dash());
             }
         }
         
@@ -295,7 +326,7 @@ public class PlayerBehavior : MonoBehaviour
         }
         
         // switch music back
-        GameBehavior.Instance.Music.resource = GameBehavior.Instance.LevelMusic;
+        GameBehavior.Instance.Music.resource = GameBehavior.Instance.LevelMusicLoops[(GameBehavior.Instance.CurrentLevel - 1) % GameBehavior.Instance.LevelEnvironments.Count];
         GameBehavior.Instance.Music.Play();
         
         // reset timer
@@ -306,9 +337,28 @@ public class PlayerBehavior : MonoBehaviour
         hammerLeft.SetActive(false);
         hammerRight.SetActive(false);
     }
+
+    IEnumerator Dash()
+    {
+        horizontalSpeed += DashSpeedAdd;
+        yield return new WaitForSeconds(DashDuration);
+        horizontalSpeed -= DashSpeedAdd;
+        _isDashing = false;
+    }
+    
+    IEnumerator Glide()
+    {
+        _rb.gravityScale = 0;
+        _rb.linearVelocityY = 0.0f;
+        yield return new WaitForSeconds(GlideDuration);
+        _rb.gravityScale = gravity;
+        _isGliding = false;
+        _canGlide = false;
+    }
     
     IEnumerator Death()
     {
+        _canGlide = false;
         StopCoroutine(HammerPowerup());
         
         //Debug.Log("player death coroutine called");
