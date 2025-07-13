@@ -67,6 +67,16 @@ public class UINavigator : MonoBehaviour
         }
         else transform.Translate(Vector3.right * _cursorMoveDistance);
         
+        // title screen has second option with text wider than everything else, need to move the cursor position accordingly
+        if (SceneManager.GetSceneByName("TitleScreen").isLoaded)
+        {
+            if (_currentOption == 2) transform.Translate(Vector3.down * 0.44f);
+            else
+            {
+                if (!Mathf.Approximately(transform.position.x, -6.87f)) transform.Translate(Vector3.up * 0.44f);
+            }
+        }
+        
         // visually select new current option by changing text color
         _options[_currentOption - 1].color = new Color(0.9960785f, 0.9019608f, 0.1058824f);
         
@@ -87,6 +97,16 @@ public class UINavigator : MonoBehaviour
         }
         else transform.Translate(Vector3.left * _cursorMoveDistance);
         
+        // title screen has second option with text wider than everything else, need to move the cursor position accordingly
+        if (SceneManager.GetSceneByName("TitleScreen").isLoaded)
+        {
+            if (_currentOption == 2) transform.Translate(Vector3.down * 0.44f);
+            else
+            {
+                if (!Mathf.Approximately(transform.position.x, -6.87f)) transform.Translate(Vector3.up * 0.44f);
+            }
+        }
+        
         // visually select new current option by changing text color
         _options[_currentOption - 1].color = new Color(0.9960785f, 0.9019608f, 0.1058824f);
         
@@ -96,22 +116,26 @@ public class UINavigator : MonoBehaviour
     void SelectOption()
     {
         Utilities.PlaySound(_audioSource, _uiSelectClip);
-        if (_options.Count == 2)
+        if (SceneManager.GetSceneByName("TitleScreen").isLoaded)
         {
             // option-dependent actions
-            // 1 - go back to game
-            // 2 - quit game
+            // 1 - play game
+            // 2 - go to high scores screen
+            // 3 - quit game
             switch (_currentOption)
             {
                 case 1:
                     StartCoroutine(PlayGame());
                     break;
                 case 2:
+                    StartCoroutine(GoToHighScores());
+                    break;
+                case 3:
                     StartCoroutine(QuitGame());
                     break;
             }
         }
-        else if (_options.Count == 3)
+        else if (SceneManager.GetSceneByName("GameOver").isLoaded)
         {
             // option-dependent actions
             // 1 - go back to game
@@ -129,6 +153,11 @@ public class UINavigator : MonoBehaviour
                     StartCoroutine(QuitGame());
                     break;
             }
+        }
+        else if (SceneManager.GetSceneByName("HighScores").isLoaded)
+        {
+            // only one UI option on this screen, so need for a switch statement
+            StartCoroutine(BackFromHighScores());
         }
     }
 
@@ -180,5 +209,19 @@ public class UINavigator : MonoBehaviour
         Utilities.PlaySound(GameBehavior.Instance.Music, GameBehavior.Instance.TitleMusic, loop: true);
         SceneManager.UnloadSceneAsync("Scenes/GameOver");
         SceneManager.LoadScene("Scenes/TitleScreen",  LoadSceneMode.Additive);
+    }
+
+    IEnumerator BackFromHighScores()
+    {
+        yield return new WaitForSeconds(0.83f);
+        SceneManager.UnloadSceneAsync("HighScores");
+        SceneManager.LoadScene("TitleScreen",  LoadSceneMode.Additive);
+    }
+
+    IEnumerator GoToHighScores()
+    {
+        yield return new WaitForSeconds(0.83f);
+        SceneManager.UnloadSceneAsync("TitleScreen");
+        SceneManager.LoadScene("HighScores", LoadSceneMode.Additive);
     }
 }

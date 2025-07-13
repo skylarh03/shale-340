@@ -102,8 +102,9 @@ public class BarrelBehavior : MonoBehaviour
         
         if (_goingDownLadder)
         {
-            if (collision.gameObject.CompareTag("Floor"))
+            if (collision.gameObject.CompareTag("Ladder Bottom"))
             {
+                //Debug.Log("Barrel colliding with a Ladder Bottom object");
                 _goingDownLadder = false;
                 _directionX *= -1.0f;
             }

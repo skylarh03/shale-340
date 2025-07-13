@@ -124,7 +124,7 @@ public class PlayerBehavior : MonoBehaviour
                 }
                 //Debug.Log(_rb.linearVelocityY);
             
-                _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Top");
+                _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Bottom");
                 isGrounded = false;
             }
             
@@ -234,7 +234,7 @@ public class PlayerBehavior : MonoBehaviour
             {
                 isGrounded = true;
                 isJumping = false;
-                _rb.excludeLayers = new LayerMask();
+                _rb.excludeLayers = LayerMask.GetMask("Ladder Bottom");
                 //Debug.Log(_rb.linearVelocityY);
             }
         }
@@ -288,7 +288,7 @@ public class PlayerBehavior : MonoBehaviour
             isClimbing = false;
             //isGrounded = true;
             _rb.gravityScale = gravity;
-            _rb.excludeLayers = new LayerMask();
+            _rb.excludeLayers = LayerMask.GetMask("Ladder Bottom");
         }
     }
 
@@ -304,7 +304,7 @@ public class PlayerBehavior : MonoBehaviour
     public void ResetPlayer(Vector3 spawnLocation)
     {
         isAlive = true;
-        _rb.excludeLayers = new LayerMask();
+        _rb.excludeLayers = LayerMask.GetMask("Ladder Bottom");
         _rb.gravityScale = gravity;
         _rb.linearVelocity = Vector2.zero;
         _rb.position = spawnLocation;
@@ -348,6 +348,7 @@ public class PlayerBehavior : MonoBehaviour
     
     IEnumerator Glide()
     {
+        _rb.excludeLayers = LayerMask.GetMask("Ladder Bottom");
         _rb.gravityScale = 0;
         _rb.linearVelocityY = 0.0f;
         yield return new WaitForSeconds(GlideDuration);

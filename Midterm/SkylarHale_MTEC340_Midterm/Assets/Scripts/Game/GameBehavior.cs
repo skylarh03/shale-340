@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -20,7 +21,11 @@ public class GameBehavior : MonoBehaviour
     public bool HasWonLevel = false;
 
     [SerializeField] private bool _playerIsAlive = true;
-    [SerializeField] private PlayerScore _playerScore;
+    public PlayerScore PlayerScore;
+
+    [Header("High Score Management")] 
+    [SerializeField] private GameObject HighScoreObject;
+    public HighScoreManager HighScoreManager;
 
     [Header("Prefabs and Objects to Manipulate")] 
     [SerializeField] private List<GameObject> _defaultPrefabs;
@@ -108,6 +113,7 @@ public class GameBehavior : MonoBehaviour
         _levelUICanvas.SetActive(false);
         
         SFX = GetComponent<AudioSource>();
+        HighScoreManager = HighScoreObject.GetComponent<HighScoreManager>();
         
         _currentBarrelInfo = _barrelPrefab.GetComponent<BarrelBehavior>();
         _currentFireInfo = _fireEnemyPrefab.GetComponent<FireEnemyBehavior>();
@@ -154,7 +160,7 @@ public class GameBehavior : MonoBehaviour
 
     public void ScorePoints(int points = 100)
     {
-        _playerScore.Score += points;
+        PlayerScore.Score += points;
         
         // play score audio
         Utilities.PlaySound(SFX, _scoreSFX);
@@ -169,7 +175,7 @@ public class GameBehavior : MonoBehaviour
             _health++;
             _healthText.text = $"{_health}/{_maxHealth} HP";
         }
-        else _playerScore.Score += 100;
+        else PlayerScore.Score += 100;
         
         // some sound effect here
     }
@@ -239,8 +245,15 @@ public class GameBehavior : MonoBehaviour
         _health = 3;
         _maxHealth = 3;
         _healthText.text = $"{_health}/{_maxHealth} HP";
-        
-        _playerScore.Score = 0;
+
+        try
+        {
+            PlayerScore.Score = 0;
+        }
+        catch (NullReferenceException e)
+        {
+            Debug.Log("Player Score object doesn't exist yet");
+        }
         _player.horizontalSpeed = 1.5f;
         _player.climbSpeed = 1.5f;
         _player.jumpForce = 5.25f;

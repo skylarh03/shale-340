@@ -43,6 +43,36 @@ public static class Utilities
         // "Unlocks Ice Flower"
     };
 
+    public static List<string> Letters = new List<string>()
+    {
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z"
+    };
+
     public static void PlaySound(AudioSource source, AudioClip clip, bool loop = false)
     {
         source.clip = clip;

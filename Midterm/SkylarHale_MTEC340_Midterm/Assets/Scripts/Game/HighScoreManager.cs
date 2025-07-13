@@ -33,7 +33,7 @@ public class HighScoreManager : MonoBehaviour
     void Start()
     {
         Initialize();
-        AddScore(new ScoreInfo("TST", 6000));
+        //AddScore(new ScoreInfo("TST", 6000));
         
         //FilesystemInfo();
     }
@@ -116,10 +116,10 @@ public class HighScoreManager : MonoBehaviour
                 scoreData.ListOfScores.Add(scoreToAdd);
                 scoreData.ListOfScores.Sort();
 
-                foreach (var score in scoreData.ListOfScores)
-                {
-                    Debug.LogFormat("{0} - {1}", score.PlayerName, score.Score);
-                }
+                // foreach (var score in scoreData.ListOfScores)
+                // {
+                //     Debug.LogFormat("{0} - {1}", score.PlayerName, score.Score);
+                // }
 
                 _scores = scoreData.ListOfScores;
             }
@@ -130,9 +130,20 @@ public class HighScoreManager : MonoBehaviour
 
             using (StreamWriter stream = File.CreateText(_jsonScores))
             {
-                string jsonString = JsonUtility.ToJson(highScores);
+                string jsonString = JsonUtility.ToJson(highScores, true);
                 stream.WriteLine(jsonString);
             }
+        }
+    }
+
+    public HighScore GetHighScores()
+    {
+        using (StreamReader stream = new StreamReader(_jsonScores))
+        {
+            var jsonString = stream.ReadToEnd();
+            var scoreData = JsonUtility.FromJson<HighScore>(jsonString);
+
+            return scoreData;
         }
     }
 }
