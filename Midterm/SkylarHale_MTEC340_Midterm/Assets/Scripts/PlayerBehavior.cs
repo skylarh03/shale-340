@@ -62,7 +62,7 @@ public class PlayerBehavior : MonoBehaviour
         _rb.angularDamping = 0.0f;
         _rb.gravityScale = gravity;
 
-        hammerRemainingTime = GameBehavior.Instance.HammerDuration;
+        //hammerRemainingTime = GameBehavior.Instance.HammerDuration; // comment this out if in testscene
     }
 
     void FixedUpdate()
@@ -82,7 +82,8 @@ public class PlayerBehavior : MonoBehaviour
         _verticalDirection = 0.0f;
 
         // must be in play state for direction to be applied
-        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        //if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        if (_direction == 0.0f) // for debugging in test scene
         {
             if (Input.GetKey(rightDirection)) _direction += 1f;
             if (Input.GetKey(leftDirection)) _direction -= 1f;

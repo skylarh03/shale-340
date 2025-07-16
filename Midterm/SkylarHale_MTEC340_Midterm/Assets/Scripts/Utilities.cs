@@ -19,6 +19,11 @@ public static class Utilities
         // BoomerangFlower, IceFlower
     }
 
+    public enum PlatformMovementAxis
+    {
+        Vertical, Horizontal
+    }
+
     public static List<string> UpgradeNames = new List<string>()
     {
         "Blue Shell",
