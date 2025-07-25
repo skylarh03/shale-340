@@ -199,7 +199,7 @@ public class UINavigator : MonoBehaviour
     IEnumerator QuitGame()
     {
         yield return new WaitForSeconds(0.83f);
-        EditorApplication.isPlaying = false;
+        //EditorApplication.isPlaying = false;
         Application.Quit();
     }
 

@@ -26,7 +26,7 @@ public class LadderSpawner : MonoBehaviour
     {
         isWaiting = true;
         
-        yield return new WaitForSeconds(0.52f);
+        yield return new WaitForSeconds(0.45f);
         
         GameObject newLadder = Instantiate(_ladderPrefab, transform);
         newLadder.SetActive(true);
