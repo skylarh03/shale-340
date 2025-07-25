@@ -33,18 +33,24 @@ public class GameBehavior : MonoBehaviour
     [SerializeField] private GameObject _fireEnemyPrefab;
     [SerializeField] private GameObject _barrelSpawnerPrefab;
     [SerializeField] private GameObject _fireSpawnerPrefab;
+    [SerializeField] private GameObject _bulletBillPrefab;
+    [SerializeField] private GameObject _bulletSpawnerPrefab;
 
     private BarrelBehavior _currentBarrelInfo;
     private FireEnemyBehavior _currentFireInfo;
+    private BulletBillBehavior _currentBulletInfo;
     private BarrelSpawner _currentBarrelSpawnerInfo;
     private FireEnemySpawner  _currentFireSpawnerInfo;
+    private BulletBillSpawner  _currentBulletSpawnerInfo;
 
     [Header("Active Spawners")]
     [SerializeField] private List<GameObject> __activeBarrelspawners =  new List<GameObject>();
     [SerializeField] private List<GameObject> _activeFireSpawners =  new List<GameObject>();
+    [SerializeField] private List<GameObject> _activeBulletSpawners =  new List<GameObject>();
     
     [HideInInspector] public List<GameObject> _activeBarrels;
     [HideInInspector] public List<GameObject> _activeFireEnemies;
+    [HideInInspector] public List<GameObject> _activeBullets;
     [Header("Level Environments")] 
     public List<LevelEnvironment> LevelEnvironments;
     [SerializeField] private LevelEnvironment _currentLevelEnv;
@@ -120,6 +126,9 @@ public class GameBehavior : MonoBehaviour
         
         _currentBarrelSpawnerInfo = _barrelSpawnerPrefab.GetComponent<BarrelSpawner>();
         _currentFireSpawnerInfo = _fireSpawnerPrefab.GetComponent<FireEnemySpawner>();
+        
+        _currentBulletInfo = _bulletBillPrefab.GetComponent<BulletBillBehavior>();
+        _currentBulletSpawnerInfo = _bulletSpawnerPrefab.GetComponent<BulletBillSpawner>();
     }
 
     void Update()
@@ -212,6 +221,8 @@ public class GameBehavior : MonoBehaviour
         _currentFireInfo.IncreaseSpeed();
         _currentBarrelSpawnerInfo.IncreaseSpawnFrequency();
         _currentFireSpawnerInfo.IncreaseSpawnFrequency();
+        _currentBulletInfo.IncreaseSpeed();
+        _currentBulletSpawnerInfo.IncreaseSpawnFrequency();
         
         // assign spawners to corresponding locations in the level prefab
         // based off of the location gameobjects
@@ -230,6 +241,15 @@ public class GameBehavior : MonoBehaviour
             GameObject newSpawner = Instantiate(_fireSpawnerPrefab, _currentLevelEnv.FireEnemySpawnerLocations[i].transform);
             newSpawner.SetActive(true);
             _activeFireSpawners.Add(newSpawner);
+        }
+        
+        // bullet spawner(s)
+        for (int i = 0; i < _currentLevelEnv.BulletSpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_bulletSpawnerPrefab, _currentLevelEnv.BulletSpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            Debug.Log(newSpawner.GetComponent<BulletBillSpawner>());
+            _activeBulletSpawners.Add(newSpawner);
         }
         
         _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
@@ -278,6 +298,8 @@ public class GameBehavior : MonoBehaviour
         _currentFireInfo.ResetSpeed();
         _currentBarrelSpawnerInfo.ResetSpawnFrequency();
         _currentFireSpawnerInfo.ResetSpawnFrequency();
+        _currentBulletInfo.ResetSpeed();
+        _currentBulletSpawnerInfo.ResetSpawnFrequency();
         
         // reset unlocked powerups
         UnlockedPowerups.Clear();
@@ -303,6 +325,15 @@ public class GameBehavior : MonoBehaviour
             GameObject newSpawner = Instantiate(_fireSpawnerPrefab, _currentLevelEnv.FireEnemySpawnerLocations[i].transform);
             newSpawner.SetActive(true);
             _activeFireSpawners.Add(newSpawner);
+        }
+        
+        // bullet spawner(s)
+        for (int i = 0; i < _currentLevelEnv.BulletSpawnerLocations.Count; i++)
+        {
+            GameObject newSpawner = Instantiate(_bulletSpawnerPrefab, _currentLevelEnv.BulletSpawnerLocations[i].transform);
+            newSpawner.SetActive(true);
+            newSpawner.GetComponent<BulletBillSpawner>().SetSpawnDirection(_currentLevelEnv.BulletSpawnerLocations[i].GetComponent<BulletSpawnDirection>().SpawnDirection);
+            _activeBulletSpawners.Add(newSpawner);
         }
 
         _player.ResetPlayer(_currentLevelEnv.PlayerSpawnLocation.transform.position);
@@ -383,6 +414,9 @@ public class GameBehavior : MonoBehaviour
 
         _activeFireEnemies.ForEach(Destroy);
         _activeFireEnemies.RemoveAll(x=>x);
+        
+        _activeBullets.ForEach(Destroy);
+        _activeBullets.RemoveAll(x=>x);
     }
 
     void DestroyAllSpawners()
@@ -391,6 +425,8 @@ public class GameBehavior : MonoBehaviour
         __activeBarrelspawners.RemoveAll(x=>x);
         _activeFireSpawners.ForEach(Destroy);
         _activeFireSpawners.RemoveAll(x=>x);
+        _activeBulletSpawners.ForEach(Destroy);
+        _activeBulletSpawners.RemoveAll(x=>x);
     }
 
     public void TransitionToPointsShop()

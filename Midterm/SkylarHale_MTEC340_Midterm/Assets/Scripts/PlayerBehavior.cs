@@ -22,6 +22,8 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] private bool isGrounded = false;
     [SerializeField] private bool isClimbing = false;
     [SerializeField] private bool isJumping = false;
+    [SerializeField] private bool isJumpingOffMovingPlatform = false;
+    [SerializeField] private bool onMovingPlatform = false;
     
     [Header("Unlocked Movement")]
     public bool DashUnlocked = false;
@@ -62,7 +64,7 @@ public class PlayerBehavior : MonoBehaviour
         _rb.angularDamping = 0.0f;
         _rb.gravityScale = gravity;
 
-        //hammerRemainingTime = GameBehavior.Instance.HammerDuration; // comment this out if in testscene
+        hammerRemainingTime = GameBehavior.Instance.HammerDuration; // comment this out if in testscene
     }
 
     void FixedUpdate()
@@ -70,7 +72,21 @@ public class PlayerBehavior : MonoBehaviour
         // apply movement using the Linear Velocity attribute of the Rigidbody
         // only allow horizontal input if player isn't climbing
         // if they are, then allow both axes
-        _rb.linearVelocityX = _direction * horizontalSpeed;
+        // normal movement is when you're not on a horizontally moving platform
+        // if you are, then movement is additive based on moving platform velocity 
+        if (!onMovingPlatform)
+        {
+            if (!isJumpingOffMovingPlatform)
+            {
+                _rb.linearVelocityX = _direction * horizontalSpeed;
+            }
+            else
+            {
+                _rb.linearVelocityX =+ _direction * horizontalSpeed;
+            }
+        }
+        else _rb.linearVelocityX += _direction * horizontalSpeed;
+        
         if (isClimbing) _rb.linearVelocityY = _verticalDirection * climbSpeed;
     }
 
@@ -82,8 +98,8 @@ public class PlayerBehavior : MonoBehaviour
         _verticalDirection = 0.0f;
 
         // must be in play state for direction to be applied
-        //if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
-        if (_direction == 0.0f) // for debugging in test scene
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
+        //if (_direction == 0.0f) // for debugging in test scene
         {
             if (Input.GetKey(rightDirection)) _direction += 1f;
             if (Input.GetKey(leftDirection)) _direction -= 1f;
@@ -123,7 +139,7 @@ public class PlayerBehavior : MonoBehaviour
                     //Debug.Log("Jumped off of sloped collision.");
                     _rb.AddForce(Vector3.up * (jumpForce - _rb.linearVelocityY), ForceMode2D.Impulse);
                 }
-                //Debug.Log(_rb.linearVelocityY);
+                Debug.Log(_rb.linearVelocityY);
             
                 _rb.excludeLayers = LayerMask.GetMask("Floor", "Ladder Bottom");
                 isGrounded = false;
@@ -188,14 +204,21 @@ public class PlayerBehavior : MonoBehaviour
                 if (isHammer) StartCoroutine(HammerPowerup());
             }
         }
+        
+        // restore floor collision when falling
+        if (_rb.linearVelocityY < 0.0f)
+        {
+            _rb.excludeLayers =  LayerMask.GetMask("Ladder Bottom");
+        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Floor"))
+        if (collision.gameObject.CompareTag("Floor") || collision.gameObject.CompareTag("Moveable Platform"))
         {
             _rb.gravityScale = gravity;
             isJumping = false;
+            isJumpingOffMovingPlatform = false;
         }
         
         // collide with barrel, trigger death
@@ -208,10 +231,19 @@ public class PlayerBehavior : MonoBehaviour
     
     void OnCollisionStay2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Floor"))
+        if (collision.gameObject.CompareTag("Floor") ||  collision.gameObject.CompareTag("Moveable Platform"))
         {
             isGrounded = true;
             isJumping = false;
+            
+            // on horizontally moving platforms, allow player to move along with it while standing
+            if (collision.gameObject.CompareTag("Moveable Platform") &&
+                collision.gameObject.GetComponent<MovablePlatformBehavior>().MovementAxis ==  Utilities.PlatformMovementAxis.Horizontal)
+            {
+                //Debug.Log("player is on top of horizontally moving platform");
+                onMovingPlatform = true;
+                _rb.linearVelocityX = collision.gameObject.GetComponent<Rigidbody2D>().linearVelocityX;
+            }
         }
     }
 
@@ -221,6 +253,23 @@ public class PlayerBehavior : MonoBehaviour
         if (other.gameObject.CompareTag("Floor") && _rb.linearVelocityY < -1.0f)
         {
             isGrounded = false;
+        }
+
+        if (other.gameObject.CompareTag("Moveable Platform"))
+        {
+            isGrounded = false;
+            onMovingPlatform = false;
+            
+            // to prevent momentum getting killed if you jump off of a horizontally moving platform, you add
+            // the platform's speed to the player's horizontal velocity
+            if (isJumping && other.gameObject.GetComponent<MovablePlatformBehavior>().MovementAxis == Utilities.PlatformMovementAxis.Horizontal)
+            {
+                isJumpingOffMovingPlatform = true;
+                if (Mathf.Approximately(_direction, 0.0f))
+                {
+                    _rb.linearVelocityX = other.gameObject.GetComponent<Rigidbody2D>().linearVelocityX;
+                }
+            }
         }
     }
 
@@ -261,6 +310,10 @@ public class PlayerBehavior : MonoBehaviour
             _rb.gravityScale = 0;
             GameBehavior.Instance.TransitionToPointsShop();
         }
+        
+        // score zone for jumping over things
+        // right now is just on the bullet bill, needs to be added to barrels and fire enemies though
+        if (other.gameObject.CompareTag("Score Zone") && isJumping) GameBehavior.Instance.ScorePoints();
     }
 
     private void OnTriggerStay2D(Collider2D other)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class MovablePlatformBehavior : MonoBehaviour
 {
-    [SerializeField] private Utilities.PlatformMovementAxis _movementAxis;
+    public Utilities.PlatformMovementAxis MovementAxis;
     
     [SerializeField] private float _moveSpeed;
     [SerializeField] private float _oppositeSideDistance;
@@ -20,7 +20,7 @@ public class MovablePlatformBehavior : MonoBehaviour
         
         // depending on the movement axis, apply an initial force in the corresponding direction
         // also determine boundaries dependent on axis
-        if (_movementAxis == Utilities.PlatformMovementAxis.Vertical)
+        if (MovementAxis == Utilities.PlatformMovementAxis.Vertical)
         {
             // vertically moving platforms always start at the bottom, so they're always moving up initially
             _rb.linearVelocityY = _moveSpeed;
@@ -29,7 +29,7 @@ public class MovablePlatformBehavior : MonoBehaviour
             _boundaryOne = _rb.position.y;
             _boundaryTwo = _rb.position.y +  _oppositeSideDistance;
         }
-        else if (_movementAxis == Utilities.PlatformMovementAxis.Horizontal)
+        else if (MovementAxis == Utilities.PlatformMovementAxis.Horizontal)
         {
             // horizontally moving platforms always start on the left, so they always move right initially
             _rb.linearVelocityX = _moveSpeed;
@@ -44,17 +44,24 @@ public class MovablePlatformBehavior : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_movementAxis == Utilities.PlatformMovementAxis.Vertical)
+        if (GameBehavior.Instance.CurrentState == Utilities.GameState.Pause)
         {
-            // incorporate the platform boundaries
-            if (_rb.position.y > _boundaryTwo) _rb.linearVelocityY = -_moveSpeed;
-            if (_rb.position.y < _boundaryOne)  _rb.linearVelocityY = _moveSpeed;
+            _rb.linearVelocity = Vector2.zero;
         }
-        else if (_movementAxis == Utilities.PlatformMovementAxis.Horizontal)
+        else if (GameBehavior.Instance.CurrentState == Utilities.GameState.Play)
         {
-            // incorporate the platform boundaries
-            if (_rb.position.x > _boundaryTwo) _rb.linearVelocityX = -_moveSpeed;
-            if (_rb.position.x < _boundaryOne)  _rb.linearVelocityX = _moveSpeed;
+            if (MovementAxis == Utilities.PlatformMovementAxis.Vertical)
+            {
+                // incorporate the platform boundaries
+                if (_rb.position.y > _boundaryTwo) _rb.linearVelocityY = -_moveSpeed;
+                if (_rb.position.y < _boundaryOne)  _rb.linearVelocityY = _moveSpeed;
+            }
+            else if (MovementAxis == Utilities.PlatformMovementAxis.Horizontal)
+            {
+                // incorporate the platform boundaries
+                if (_rb.position.x > _boundaryTwo) _rb.linearVelocityX = -_moveSpeed;
+                if (_rb.position.x < _boundaryOne)  _rb.linearVelocityX = _moveSpeed;
+            }
         }
     }
 }

@@ -24,6 +24,11 @@ public static class Utilities
         Vertical, Horizontal
     }
 
+    public enum SpawnDirection
+    {
+        Left, Right
+    }
+
     public static List<string> UpgradeNames = new List<string>()
     {
         "Blue Shell",

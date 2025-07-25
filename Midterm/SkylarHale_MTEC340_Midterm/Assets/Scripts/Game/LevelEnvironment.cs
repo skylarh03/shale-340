@@ -9,5 +9,6 @@ public class LevelEnvironment : MonoBehaviour
     public List<GameObject> PickupLocations;
     public List<GameObject> BarrelSpawnerLocations;
     public List<GameObject> FireEnemySpawnerLocations;
+    public List<GameObject> BulletSpawnerLocations;
     public GameObject PlayerSpawnLocation;
 }
