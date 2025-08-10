@@ -5,6 +5,7 @@ using Random = UnityEngine.Random;
 public class SnowflakeBehavior : MonoBehaviour
 {
     [SerializeField] private float _fallSpeed;
+    [SerializeField] private float _specialChance;
 
     [SerializeField] private Material _defaultMaterial;
     [SerializeField] private Material _specialMaterial;
@@ -29,7 +30,7 @@ public class SnowflakeBehavior : MonoBehaviour
         // determine if snowflake is a special one or not
         // if it is, it will change the root and mode of the music, as well as change the rendered material
         // to indicate that it's special. otherwise, keep the default material
-        if (Random.Range(0.0f, 100.0f) < 2f)
+        if (Random.Range(0.0f, 100.0f) < _specialChance)
         {
             _mr.material = _specialMaterial;
             _isSpecial = true;

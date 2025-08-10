@@ -49,6 +49,9 @@
 		<relationship name="parameters">
 			<destination>{afe75b0c-2c15-42c9-9cf3-c423418a314c}</destination>
 		</relationship>
+		<relationship name="banks">
+			<destination>{0361cd60-c2f6-4c45-a3fc-aa78731ab3d0}</destination>
+		</relationship>
 	</object>
 	<object class="EventMixer" id="{25f21e85-aa25-437d-9107-9679a61f057d}">
 		<relationship name="masterBus">
@@ -490,7 +493,7 @@
 	</object>
 	<object class="SustainPoint" id="{29814f1c-10ed-4779-a59e-1dba793b95a4}">
 		<property name="position">
-			<value>0.90625</value>
+			<value>0.55000000000000004</value>
 		</property>
 		<relationship name="timeline">
 			<destination>{b1389896-5426-4c1c-99af-a49d01dd8d6b}</destination>
@@ -676,6 +679,7 @@
 	<object class="MixerBusEffectChain" id="{73e5e70b-f3ed-4447-ab8c-8331eb69b054}">
 		<relationship name="effects">
 			<destination>{f9b16024-ff4e-4f5d-8a91-ed5a4f99e0ac}</destination>
+			<destination>{13334bfe-105a-4da2-bad7-defb3ad0f113}</destination>
 			<destination>{fe7ee780-03f1-4850-82e1-499544218a5c}</destination>
 		</relationship>
 	</object>
@@ -882,6 +886,17 @@
 		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{f9b16024-ff4e-4f5d-8a91-ed5a4f99e0ac}" />
+	<object class="MultibandEqEffect" id="{13334bfe-105a-4da2-bad7-defb3ad0f113}">
+		<property name="filterTypeA">
+			<value>9</value>
+		</property>
+		<property name="frequencyA">
+			<value>235.405243</value>
+		</property>
+		<property name="gainA">
+			<value>-15.5172415</value>
+		</property>
+	</object>
 	<object class="ObjectSpatialiserEffect" id="{fe7ee780-03f1-4850-82e1-499544218a5c}">
 		<property name="minimumDistance">
 			<value>0</value>
