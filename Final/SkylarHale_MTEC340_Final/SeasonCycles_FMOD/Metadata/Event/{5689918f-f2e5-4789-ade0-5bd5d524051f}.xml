@@ -8,7 +8,7 @@
 			<value>Play Snow Note - Markovian</value>
 		</property>
 		<property name="outputFormat">
-			<value>4</value>
+			<value>1</value>
 		</property>
 		<relationship name="folder">
 			<destination>{f5214732-34a6-4ae6-ba02-b38239f1ec7c}</destination>
@@ -182,9 +182,6 @@
 		</relationship>
 	</object>
 	<object class="EventMixerMaster" id="{f7994652-b105-4db7-8fa2-7f46c5006f42}">
-		<relationship name="modulators">
-			<destination>{59139060-d28c-4b5c-b836-76b8ff98eb89}</destination>
-		</relationship>
 		<relationship name="effectChain">
 			<destination>{73e5e70b-f3ed-4447-ab8c-8331eb69b054}</destination>
 		</relationship>
@@ -673,36 +670,16 @@
 			<destination>{32537d67-79ba-4b73-a7e5-4b7dc54fbf1c}</destination>
 		</relationship>
 	</object>
-	<object class="ADSRModulator" id="{59139060-d28c-4b5c-b836-76b8ff98eb89}">
-		<property name="nameOfPropertyBeingModulated">
-			<value>volume</value>
-		</property>
-		<property name="initialValue">
-			<value>-80</value>
-		</property>
-		<property name="attackTime">
-			<value>0</value>
-		</property>
-		<property name="releaseTime">
-			<value>12000</value>
-		</property>
-		<property name="releaseShape">
-			<value>0.594073474</value>
-		</property>
-		<property name="finalValue">
-			<value>-80</value>
-		</property>
-	</object>
 	<object class="MixerBusEffectChain" id="{73e5e70b-f3ed-4447-ab8c-8331eb69b054}">
 		<relationship name="effects">
 			<destination>{f9b16024-ff4e-4f5d-8a91-ed5a4f99e0ac}</destination>
 			<destination>{13334bfe-105a-4da2-bad7-defb3ad0f113}</destination>
-			<destination>{fe7ee780-03f1-4850-82e1-499544218a5c}</destination>
+			<destination>{1e3cc043-1adb-450c-b4a1-7c6c2cf30513}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{cdd45e27-cd76-472b-baa2-f7cc6e4cf56e}">
 		<property name="overridingOutputFormat">
-			<value>4</value>
+			<value>1</value>
 		</property>
 	</object>
 	<object class="MixerBusFader" id="{49a69c65-a6a6-48fe-a3d8-25c3f3a2b8b8}" />
@@ -848,12 +825,9 @@
 			<value>-15.5172415</value>
 		</property>
 	</object>
-	<object class="ObjectSpatialiserEffect" id="{fe7ee780-03f1-4850-82e1-499544218a5c}">
-		<property name="minimumDistance">
-			<value>0</value>
-		</property>
+	<object class="SpatialiserEffect" id="{1e3cc043-1adb-450c-b4a1-7c6c2cf30513}">
 		<property name="maximumDistance">
-			<value>200</value>
+			<value>90</value>
 		</property>
 		<property name="overrideRange">
 			<value>true</value>

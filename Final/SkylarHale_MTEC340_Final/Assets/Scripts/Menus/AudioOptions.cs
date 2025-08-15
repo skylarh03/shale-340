@@ -18,15 +18,10 @@ public class AudioOptions : MonoBehaviour
     {
         FMODUnity.RuntimeManager.StudioSystem.setParameterByName("Global Environment Volume", volume);
     }
-    
+
     public void LoadTitleScreen()
     {
-        StartCoroutine(ToTitleScreenOnDelay());
-    }
-    
-    IEnumerator ToTitleScreenOnDelay()
-    {
-        yield return new WaitForSeconds(1.0f);
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Button Click");
         SceneManager.LoadScene("TitleScreen", LoadSceneMode.Single);
     }
 }
